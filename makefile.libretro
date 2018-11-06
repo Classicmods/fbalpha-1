@@ -267,20 +267,10 @@ else ifeq ($(platform), classic_armv7_a7)
 	TARGET := $(TARGET_NAME)_libretro.so
 	fpic := -fPIC
 	SHARED := -shared -Wl,-no-undefined -Wl,--version-script=$(VERSION_SCRIPT)
-	# There is already stuff for -Ox below, if Ofast is safe for fbalpha,
-	# it needs to be properly tested and added for all platforms
-	# PLATFORM_FLAGS += -Ofast
+	# Ofast safe for this platform and tested. Maybe can be tested on other platforms
+	PLATFORM_FLAGS += -Ofast
 	PLATFORM_FLAGS = -marm -mtune=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
-	# The following c++11 stuff makes no sense, fbalpha is gnu99/gnu++98 compliant
-	# it was probably just overriding a faulty flag above
-	# CXXFLAGS := -std=gnu++11
-	# CFLAGS := -std=gnu11
-	# The following is definitely unneeded
-	# BUILTIN_GPU = neon
-	# USE_DYNAREC = 1
-	# CPPFLAGS += $(CFLAGS)
-	# ASFLAGS += $(CFLAGS)
-	USE_EXPERIMENTAL_FLAGS = 1
+	A7A7_FLAGS = 1
 	HAVE_NEON = 1
 	ARCH = arm
 	ENDIANNESS_DEFINES := -DLSB_FIRST
@@ -471,7 +461,8 @@ ifeq ($(FASTMATH), 1)
    endif
 endif
 
-ifeq ($(USE_EXPERIMENTAL_FLAGS), 1)
+#Armv7 Cortex A7 build flags. (Intended for Classic Systems)
+ifeq ($(A7A7_FLAGS), 1) 
 	EXPERIMENTAL_FLAGS = -flto=4 -fwhole-program -fuse-linker-plugin \
 		-fdata-sections -ffunction-sections -Wl,--gc-sections \
 		-fno-stack-protector -fno-ident -fomit-frame-pointer \
