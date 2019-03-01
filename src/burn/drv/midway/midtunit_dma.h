@@ -32,10 +32,8 @@ enum
 };
 
 
-static struct
+struct dma_state_s
 {
-    UINT8 *     gfxrom;
-
     UINT32      offset;         /* source offset, in bits */
     INT32       rowbits;        /* source bits to skip each row */
     INT32       xpos;           /* x position, clipped */
@@ -56,8 +54,12 @@ static struct
     INT32       startskip;      /* pixels to skip at start */
     INT32       endskip;        /* pixels to skip at end */
     UINT16      xstep;          /* 8.8 fixed number scale x factor */
-    UINT16      ystep;          /* 8.8 fixed number scale y factor */
-} dma_state;
+	UINT16      ystep;          /* 8.8 fixed number scale y factor */
+};
+
+static dma_state_s *dma_state;
+
+static UINT8 *     dma_gfxrom;
 
 /*** constant definitions ***/
 #define PIXEL_SKIP      0
@@ -81,10 +83,8 @@ typedef void (*dma_draw_func)(void);
 
 
 /*** fast pixel extractors ***/
-#if 1//!defined(ALIGN_SHORTS) && defined(LSB_FIRST)
+#ifndef __LIBRETRO__
 #define EXTRACTGEN(m)   ((*(UINT16 *)&base[o >> 3] >> (o & 7)) & (m))
-#elif defined(powerc)
-#define EXTRACTGEN(m)   ((__lhbrx(base, o >> 3) >> (o & 7)) & (m))
 #else
 #define EXTRACTGEN(m)   (((base[o >> 3] | (base[(o >> 3) + 1] << 8)) >> (o & 7)) & (m))
 #endif
@@ -92,23 +92,23 @@ typedef void (*dma_draw_func)(void);
 /*** core blitter routine macro ***/
 #define DMA_DRAW_FUNC_BODY(name, bitsperpixel, extractor, xflip, skip, scale, zero, nonzero)    \
 {                                                             \
-    int height = dma_state.height << 8;                       \
-    UINT8 *base = dma_state.gfxrom;                           \
-    UINT32 offset = dma_state.offset;                         \
-    UINT16 pal = dma_state.palette;                           \
-    UINT16 color = pal | dma_state.color;                     \
-    int sy = dma_state.ypos, iy = 0, ty;                      \
+    int height = dma_state->height << 8;                       \
+    UINT8 *base = dma_gfxrom;                                 \
+    UINT32 offset = dma_state->offset;                         \
+    UINT16 pal = dma_state->palette;                           \
+    UINT16 color = pal | dma_state->color;                     \
+    int sy = dma_state->ypos, iy = 0, ty;                      \
     int bpp = bitsperpixel;                                   \
     int mask = (1 << bpp) - 1;                                \
-    int xstep = scale ? dma_state.xstep : 0x100;              \
+    int xstep = scale ? dma_state->xstep : 0x100;              \
                                                               \
     /* loop over the height */                                \
     while (iy < height)                                       \
     {                                                         \
-        int startskip = dma_state.startskip << 8;             \
-        int endskip = dma_state.endskip << 8;                 \
-        int width = dma_state.width << 8;                     \
-        int sx = dma_state.xpos, ix = 0, tx;                  \
+        int startskip = dma_state->startskip << 8;             \
+        int endskip = dma_state->endskip << 8;                 \
+        int width = dma_state->width << 8;                     \
+        int sx = dma_state->xpos, ix = 0, tx;                  \
         UINT32 o = offset;                                    \
         int pre, post;                                        \
         UINT16 *d;                                            \
@@ -120,7 +120,7 @@ typedef void (*dma_draw_func)(void);
             o += 8;                                           \
                                                               \
             /* adjust for preskip */                          \
-            pre = (value & 0x0f) << (dma_state.preskip + 8);  \
+            pre = (value & 0x0f) << (dma_state->preskip + 8);  \
             tx = pre / xstep;                                 \
             if (xflip)                                        \
                 sx = (sx - tx) & XPOSMASK;                    \
@@ -129,13 +129,13 @@ typedef void (*dma_draw_func)(void);
             ix += tx * xstep;                                 \
                                                               \
             /* adjust for postskip */                         \
-            post = ((value >> 4) & 0x0f) << (dma_state.postskip + 8); \
+            post = ((value >> 4) & 0x0f) << (dma_state->postskip + 8); \
             width -= post;                                    \
             endskip -= post;                                  \
         }                                                     \
                                                               \
         /* handle Y clipping */                               \
-        if (sy < dma_state.topclip || sy > dma_state.botclip) \
+        if (sy < dma_state->topclip || sy > dma_state->botclip) \
             goto clipy;                                       \
                                                               \
         /* handle start skip */                               \
@@ -147,8 +147,8 @@ typedef void (*dma_draw_func)(void);
         }                                                     \
                                                               \
         /* handle end skip */                                 \
-        if ((width >> 8) > dma_state.width - dma_state.endskip) \
-            width = (dma_state.width - dma_state.endskip) << 8; \
+        if ((width >> 8) > dma_state->width - dma_state->endskip) \
+            width = (dma_state->width - dma_state->endskip) << 8; \
                                                               \
         /* determine destination pointer */                   \
         d = &DrvVRAM16[sy * 512];                             \
@@ -157,7 +157,7 @@ typedef void (*dma_draw_func)(void);
         while (ix < width)                                    \
         {                                                     \
             /* only process if not clipped */                 \
-            if (sx >= dma_state.leftclip && sx <= dma_state.rightclip) \
+            if (sx >= dma_state->leftclip && sx <= dma_state->rightclip) \
             {                                                 \
                 /* special case similar handling of zero/non-zero */ \
                 if (zero == nonzero)                          \
@@ -216,14 +216,14 @@ typedef void (*dma_draw_func)(void);
                                                               \
 clipy:                                                        \
         /* advance to the next row */                         \
-        if (dma_state.yflip)                                  \
+        if (dma_state->yflip)                                  \
             sy = (sy - 1) & YPOSMASK;                         \
         else                                                  \
             sy = (sy + 1) & YPOSMASK;                         \
         if (!scale)                                           \
         {                                                     \
             iy += 0x100;                                      \
-            width = dma_state.width;                          \
+            width = dma_state->width;                          \
             if (skip)                                         \
             {                                                 \
                 offset += 8;                                  \
@@ -236,22 +236,22 @@ clipy:                                                        \
         else                                                  \
         {                                                     \
             ty = iy >> 8;                                     \
-            iy += dma_state.ystep;                            \
+            iy += dma_state->ystep;                            \
             ty = (iy >> 8) - ty;                              \
             if (!skip)                                        \
-                offset += ty * dma_state.width * bpp;         \
+                offset += ty * dma_state->width * bpp;         \
             else if (ty--)                                    \
             {                                                 \
                 o = offset + 8;                               \
-                width = dma_state.width - ((pre + post) >> 8);\
+                width = dma_state->width - ((pre + post) >> 8);\
                 if (width > 0) o += width * bpp;              \
                 while (ty--)                                  \
                 {                                             \
                     UINT8 value = EXTRACTGEN(0xff);           \
                     o += 8;                                   \
-                    pre = (value & 0x0f) << dma_state.preskip;\
-                    post = ((value >> 4) & 0x0f) << dma_state.postskip; \
-                    width = dma_state.width - pre - post;     \
+                    pre = (value & 0x0f) << dma_state->preskip;\
+                    post = ((value >> 4) & 0x0f) << dma_state->postskip; \
+                    width = dma_state->width - pre - post;     \
                     if (width > 0) o += width * bpp;          \
                 }                                             \
                 offset = o;                                   \
@@ -309,11 +309,18 @@ static void dma_draw_none(void)
 
 
 /*** blitter family declarations ***/
-DECLARE_BLITTER_SET(dma_draw_skip_scale,       dma_state.bpp, EXTRACTGEN,   SKIP_YES, SCALE_YES)
-DECLARE_BLITTER_SET(dma_draw_noskip_scale,     dma_state.bpp, EXTRACTGEN,   SKIP_NO,  SCALE_YES)
-DECLARE_BLITTER_SET(dma_draw_skip_noscale,     dma_state.bpp, EXTRACTGEN,   SKIP_YES, SCALE_NO)
-DECLARE_BLITTER_SET(dma_draw_noskip_noscale,   dma_state.bpp, EXTRACTGEN,   SKIP_NO,  SCALE_NO)
+DECLARE_BLITTER_SET(dma_draw_skip_scale,       dma_state->bpp, EXTRACTGEN,   SKIP_YES, SCALE_YES)
+DECLARE_BLITTER_SET(dma_draw_noskip_scale,     dma_state->bpp, EXTRACTGEN,   SKIP_NO,  SCALE_YES)
+DECLARE_BLITTER_SET(dma_draw_skip_noscale,     dma_state->bpp, EXTRACTGEN,   SKIP_YES, SCALE_NO)
+DECLARE_BLITTER_SET(dma_draw_noskip_noscale,   dma_state->bpp, EXTRACTGEN,   SKIP_NO,  SCALE_NO)
 
+#define DMA_IRQ     TMS34010_INT_EX1
+
+static void TUnitDmaCallback()
+{
+	TMS34010GenerateIRQ(DMA_IRQ);
+	nDMA[DMA_COMMAND] &= ~0x8000;
+}
 
 static UINT16 TUnitDmaRead(UINT32 address)
 {
@@ -323,10 +330,9 @@ static UINT16 TUnitDmaRead(UINT32 address)
     return nDMA[offset];
 }
 
-#define DMA_IRQ     TMS34010_INT_EX1
 static void TUnitDmaWrite(UINT32 address, UINT16 value)
 {
-    dma_state.gfxrom = DrvGfxROM;
+    dma_gfxrom = DrvGfxROM;
     static const UINT8 register_map[2][16] =
     {
         { 0,1,2,3,4,5,6,7,8,9,10,11,16,17,14,15 },
@@ -337,7 +343,7 @@ static void TUnitDmaWrite(UINT32 address, UINT16 value)
     int command, bpp, regnum;
     UINT32 gfxoffset;
     int pixels = 0;
-  
+
     nDMA[reg] = value;
 
     if (reg != DMA_COMMAND)
@@ -352,26 +358,26 @@ static void TUnitDmaWrite(UINT32 address, UINT16 value)
     bpp = (command >> 12) & 7;
 
     /* fill in the basic data */
-    dma_state.xpos = nDMA[DMA_XSTART] & XPOSMASK;
-    dma_state.ypos = nDMA[DMA_YSTART] & YPOSMASK;
-    dma_state.width = nDMA[DMA_WIDTH] & 0x3ff;
-    dma_state.height = nDMA[DMA_HEIGHT] & 0x3ff;
-    dma_state.palette = nDMA[DMA_PALETTE] & 0x7f00;
-    dma_state.color = nDMA[DMA_COLOR] & 0xff;
+    dma_state->xpos = nDMA[DMA_XSTART] & XPOSMASK;
+    dma_state->ypos = nDMA[DMA_YSTART] & YPOSMASK;
+    dma_state->width = nDMA[DMA_WIDTH] & 0x3ff;
+    dma_state->height = nDMA[DMA_HEIGHT] & 0x3ff;
+    dma_state->palette = nDMA[DMA_PALETTE] & 0x7f00;
+    dma_state->color = nDMA[DMA_COLOR] & 0xff;
 
     /* fill in the rev 2 data */
-    dma_state.yflip = (command & 0x20) >> 5;
-    dma_state.bpp = bpp ? bpp : 8;
-    dma_state.preskip = (command >> 8) & 3;
-    dma_state.postskip = (command >> 10) & 3;
-    dma_state.xstep = nDMA[DMA_SCALE_X] ? nDMA[DMA_SCALE_X] : 0x100;
-    dma_state.ystep = nDMA[DMA_SCALE_Y] ? nDMA[DMA_SCALE_Y] : 0x100;
+    dma_state->yflip = (command & 0x20) >> 5;
+    dma_state->bpp = bpp ? bpp : 8;
+    dma_state->preskip = (command >> 8) & 3;
+    dma_state->postskip = (command >> 10) & 3;
+    dma_state->xstep = nDMA[DMA_SCALE_X] ? nDMA[DMA_SCALE_X] : 0x100;
+    dma_state->ystep = nDMA[DMA_SCALE_Y] ? nDMA[DMA_SCALE_Y] : 0x100;
 
     /* clip the clippers */
-    dma_state.topclip = nDMA[DMA_TOPCLIP] & 0x1ff;
-    dma_state.botclip = nDMA[DMA_BOTCLIP] & 0x1ff;
-    dma_state.leftclip = nDMA[DMA_LEFTCLIP] & 0x3ff;
-    dma_state.rightclip = nDMA[DMA_RIGHTCLIP] & 0x3ff;
+    dma_state->topclip = nDMA[DMA_TOPCLIP] & 0x1ff;
+    dma_state->botclip = nDMA[DMA_BOTCLIP] & 0x1ff;
+    dma_state->leftclip = nDMA[DMA_LEFTCLIP] & 0x3ff;
+    dma_state->rightclip = nDMA[DMA_RIGHTCLIP] & 0x3ff;
 
     /* determine the offset */
     gfxoffset = nDMA[DMA_OFFSETLO] | (nDMA[DMA_OFFSETHI] << 16);
@@ -386,7 +392,7 @@ static void TUnitDmaWrite(UINT32 address, UINT16 value)
     if (gfxoffset >= 0xf8000000)
         gfxoffset -= 0xf8000000;
     if (gfxoffset < 0x10000000)
-        dma_state.offset = gfxoffset;
+        dma_state->offset = gfxoffset;
     else
     {
         goto skipdma;
@@ -399,24 +405,24 @@ static void TUnitDmaWrite(UINT32 address, UINT16 value)
     /* full word seems to be the starting skip value.           */
     if (command & 0x40)
     {
-        dma_state.startskip = nDMA[DMA_LRSKIP] & 0xff;
-        dma_state.endskip = nDMA[DMA_LRSKIP] >> 8;
+        dma_state->startskip = nDMA[DMA_LRSKIP] & 0xff;
+        dma_state->endskip = nDMA[DMA_LRSKIP] >> 8;
     }
     else
     {
-        dma_state.startskip = 0;
-        dma_state.endskip = nDMA[DMA_LRSKIP];
+        dma_state->startskip = 0;
+        dma_state->endskip = nDMA[DMA_LRSKIP];
     }
 
     /* then draw */
-    if (dma_state.xstep == 0x100 && dma_state.ystep == 0x100)
+    if (dma_state->xstep == 0x100 && dma_state->ystep == 0x100)
     {
         if (command & 0x80)
             (*dma_draw_skip_noscale[command & 0x1f])();
         else
             (*dma_draw_noskip_noscale[command & 0x1f])();
 
-        pixels = dma_state.width * dma_state.height;
+        pixels = dma_state->width * dma_state->height;
     }
     else
     {
@@ -425,14 +431,12 @@ static void TUnitDmaWrite(UINT32 address, UINT16 value)
         else
             (*dma_draw_noskip_scale[command & 0x1f])();
 
-        if (dma_state.xstep && dma_state.ystep)
-            pixels = ((dma_state.width << 8) / dma_state.xstep) * ((dma_state.height << 8) / dma_state.ystep);
+        if (dma_state->xstep && dma_state->ystep)
+            pixels = ((dma_state->width << 8) / dma_state->xstep) * ((dma_state->height << 8) / dma_state->ystep);
         else
             pixels = 0;
     }
 
 skipdma:
-    TMS34010GenerateIRQ(DMA_IRQ);
-    nDMA[DMA_COMMAND] &= ~0x8000;
-
+	TMS34010TimerCB(TMS34010TotalCycles() + ((double)(41*pixels) * 0.0063447), TUnitDmaCallback);
 }

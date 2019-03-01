@@ -9,6 +9,12 @@ EXTERNAL_ZLIB             := 0
 BUILD_X64_EXE             := 0
 WANT_NEOGEOCD             := 0
 HAVE_NEON                 := 0
+USE_CYCLONE               := 0
+
+ifeq ($(TARGET_ARCH_ABI),armeabi-v7a)
+  HAVE_NEON               := 1
+  #USE_CYCLONE             := 1
+endif
 
 CFLAGS      :=
 CXXFLAGS    :=
@@ -19,7 +25,7 @@ FBA_DEFINES :=
 
 include $(ROOT_DIR)/makefile.libretro_common
 
-COMMON_FLAGS := -DUSE_SPEEDHACKS -D__LIBRETRO__ -DANDROID -DFRONTEND_SUPPORTS_RGB565 -Wno-write-strings -DLSB_FIRST $(FBA_DEFINES)
+COMMON_FLAGS := -DUSE_SPEEDHACKS -D__LIBRETRO__ -DANDROID -Wno-write-strings -DLSB_FIRST $(FBA_DEFINES)
 
 # Build shared library including static C module
 include $(CLEAR_VARS)
@@ -32,4 +38,11 @@ LOCAL_LDFLAGS      := -Wl,-version-script=$(MAIN_FBA_DIR)/burner/libretro/link.T
 LOCAL_LDLIBS       := $(LDFLAGS)
 LOCAL_CPP_FEATURES := exceptions rtti
 LOCAL_DISABLE_FORMAT_STRING_CHECKS := true
+LOCAL_ARM_MODE := arm
+
+ifeq ($(TARGET_ARCH_ABI),armeabi-v7a)
+  LOCAL_ARM_MODE := arm
+  LOCAL_ARM_NEON := true
+endif
+
 include $(BUILD_SHARED_LIBRARY)

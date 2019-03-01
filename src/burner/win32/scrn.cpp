@@ -1023,14 +1023,14 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 			nCDEmuSelect = 0;
 			TCHAR szFilter[100];
 			_stprintf(szFilter, _T("%s"), FBALoadStringEx(hAppInst, IDS_CD_SELECT_FILTER, true));
-			memcpy(szFilter + _tcslen(szFilter), _T(" (*.iso,*.cue)\0*.iso;*.cue\0\0"), 28 * sizeof(TCHAR));
+			memcpy(szFilter + _tcslen(szFilter), _T(" (*.ccd,*.cue)\0*.ccd;*.cue\0\0"), 28 * sizeof(TCHAR));
 			TCHAR szTitle[100];
 			_stprintf(szTitle, _T("%s"), FBALoadStringEx(hAppInst, IDS_CD_SELECT_IMAGE_TITLE, true));
 			if (UseDialogs() && !bDrvOkay) {
 				memset(&ofn, 0, sizeof(ofn));
 				ofn.lStructSize = sizeof(ofn);
 				ofn.hwndOwner = hScrnWnd;
-				ofn.lpstrFile = CDEmuImage;
+				ofn.lpstrFile = StrReplace(CDEmuImage, _T('/'), _T('\\'));
 				ofn.nMaxFile = MAX_PATH;
 				ofn.lpstrTitle = szTitle;
 				ofn.lpstrFilter = szFilter;
@@ -3335,7 +3335,7 @@ int ScrnSize()
   	return 0;
 }
 
-#include "neocdlist.h"
+#include "neocdlist.h" // IsNeoGeoCD()
 
 int ScrnTitle()
 {
@@ -3354,7 +3354,8 @@ int ScrnTitle()
 			pszPosition += _stprintf(pszPosition, _T(SEPERATOR_2) _T("%s"), pszName);
 		}
 
-		if(NeoCDInfo_Init()) {
+		if (IsNeoGeoCD()) {
+			NeoCDInfo_SetTitle();
 			return 0;
 		}
 

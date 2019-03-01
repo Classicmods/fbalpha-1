@@ -1,11 +1,25 @@
-#include "driver.h"
-#include "burnint.h"
+// midway wolf unit
+
+// bugs due to tms34010:
+//  1: wwfmania crashes shortly after booting.  missing raster ops in tms34010?
+//  2: openice goes bonkers on game start, cpu players wont move
+//     plus writes garbage to cmos
+//  3: nbahangt, missing video objects
+//
+// easy:
+//  4: figure out why last line doesn't always render in rampgwt
+//    3: answer, screen is offset by -1 line
+
+#include "tiles_generic.h"
 #include "midwunit.h"
 #include "midwayic.h"
 #include "dcs2k.h"
 #include "tms34010_intf.h"
+#include <stddef.h>
 
 static UINT8 *AllMem;
+static UINT8 *RamEnd;
+static UINT8 *AllRam;
 static UINT8 *MemEnd;
 static UINT8 *DrvBootROM;
 static UINT8 *DrvSoundROM;
@@ -13,7 +27,7 @@ static UINT8 *DrvGfxROM;
 static UINT8 *DrvRAM;
 static UINT8 *DrvNVRAM;
 static UINT8 *DrvPalette;
-static UINT16 *DrvPaletteB;
+static UINT32 *DrvPaletteB;
 static UINT8 *DrvVRAM;
 static UINT16 *DrvVRAM16;
 
@@ -21,21 +35,20 @@ UINT8 nWolfUnitRecalc;
 UINT8 nWolfUnitJoy1[32];
 UINT8 nWolfUnitJoy2[32];
 UINT8 nWolfUnitJoy3[32];
-UINT8 nWolfUnitDSW[8];
+UINT8 nWolfUnitDSW[2];
+UINT8 nWolfReset = 0;
 static UINT32 DrvInputs[4];
-int nIOShuffle[16];
-
-
-static bool bCMOSWriteEnable = false;
 
 static bool bGfxRomLarge = true;
 static UINT32 nGfxBankOffset[2] = { 0x000000, 0x400000 };
+
+static bool bCMOSWriteEnable = false;
 static UINT32 nVideoBank = 1;
-
-static UINT16 nDMA[32];
+static UINT16 *nDMA;
 static UINT16 nWolfUnitCtrl = 0;
+static INT32 nIOShuffle[16];
 
-
+static INT32 wwfmania = 0;
 
 #define RGB888(r,g,b)   ((r) | ((g) << 8) | ((b) << 16))
 #define RGB888_r(x) ((x) & 0xFF)
@@ -58,17 +71,42 @@ static INT32 MemIndex()
 {
     UINT8 *Next; Next = AllMem;
 
-    DrvBootROM 	= Next;             Next += 0x80000 * 2;
-	DrvSoundROM	= Next;				Next += 0x1000000;
-	DrvGfxROM 	= Next;				Next += 0x2000000;
-	DrvRAM		= Next;				Next += 0x80000;
-	DrvNVRAM	= Next;				Next += 0xC000;
-	DrvPalette	= Next;				Next += 0x10000;
-	DrvPaletteB	= (UINT16*)Next;	Next += 0x10000;
-	DrvVRAM		= Next;				Next += 0x400000;
+    DrvBootROM 	= Next;             Next += 0x800000 * sizeof(UINT8);
+	DrvSoundROM	= Next;				Next += 0x1000000 * sizeof(UINT8);
+	DrvGfxROM 	= Next;				Next += 0x2000000 * sizeof(UINT8);
+
+	DrvNVRAM	= Next;             Next += TOBYTE(0x60000) * sizeof(UINT16);
+
+	AllRam		= Next;
+	DrvRAM		= Next;				Next += TOBYTE(0x400000) * sizeof(UINT16);
+	DrvPalette	= Next;				Next += 0x20000 * sizeof(UINT8);
+	DrvPaletteB	= (UINT32*)Next;	Next += 0x8000 * sizeof(UINT32);
+	DrvVRAM		= Next;				Next += 0x80000 * sizeof(UINT16);
 	DrvVRAM16	= (UINT16*)DrvVRAM;
-    MemEnd		= Next;
+
+	nDMA        = (UINT16*)Next;    Next += 0x0020 * sizeof(UINT16);
+	dma_state   = (dma_state_s*)Next; Next += sizeof(dma_state_s);
+
+	RamEnd		= Next;
+
+	MemEnd		= Next;
     return 0;
+}
+
+static void sound_sync()
+{
+	INT32 cyc = ((double)TMS34010TotalCycles() / 63 * 100) - Dcs2kTotalCycles();
+	if (cyc > 0) {
+		Dcs2kRun(cyc);
+	}
+}
+
+static void sound_sync_end()
+{
+	INT32 cyc = ((double)10000000 * 100 / nBurnFPS) - Dcs2kTotalCycles();
+	if (cyc > 0) {
+		Dcs2kRun(cyc);
+	}
 }
 
 
@@ -77,24 +115,69 @@ static UINT16 WolfUnitIoRead(UINT32 address)
     UINT32 offset = (address >> 4);
     offset = nIOShuffle[offset % 16];
     switch (offset) {
-    case 0: return ~DrvInputs[0];
-    case 1: return ~DrvInputs[1];
-    case 2: return DrvInputs[2];
-    case 3: return ~DrvInputs[3];
-    case 4: return ((MidwaySerialPicStatus() << 12) | (Dcs2kDataRead()));
-    default:
-    	return ~0;
-    }
+		case 0: return ~DrvInputs[0];
+		case 1: return ~DrvInputs[1];
+		case 2: return nWolfUnitDSW[0] | (nWolfUnitDSW[1] << 8);
+		case 3: return ~DrvInputs[3];
+		case 4: {
+			sound_sync();
+			return ((MidwaySerialPicStatus() << 12) | (Dcs2kControlRead() & 0xfff));
+		}
+	default:
+		return ~0;
+	}
 }
 
 void WolfUnitIoWrite(UINT32 address, UINT16 value)
 {
+	if (wwfmania && address <= 0x180000f) {
+		for (INT32 i = 0; i < 16; i++) nIOShuffle[i] = i % 8;
+
+		switch (value) {
+			case 1: {
+				nIOShuffle[0x04] = 0;
+				nIOShuffle[0x08] = 1;
+				nIOShuffle[0x01] = 2;
+				nIOShuffle[0x09] = 3;
+				nIOShuffle[0x02] = 4;
+				break;
+			}
+			case 2: {
+				nIOShuffle[0x08] = 0;
+				nIOShuffle[0x02] = 1;
+				nIOShuffle[0x04] = 2;
+				nIOShuffle[0x06] = 3;
+				nIOShuffle[0x01] = 4;
+				break;
+			}
+			case 3: {
+				nIOShuffle[0x01] = 0;
+				nIOShuffle[0x08] = 1;
+				nIOShuffle[0x02] = 2;
+				nIOShuffle[0x0A] = 3;
+				nIOShuffle[0x05] = 4;
+				break;
+			}
+			case 4: {
+				nIOShuffle[0x02] = 0;
+				nIOShuffle[0x04] = 1;
+				nIOShuffle[0x01] = 2;
+				nIOShuffle[0x07] = 3;
+				nIOShuffle[0x08] = 4;
+				break;
+			}
+		}
+
+		return;
+	}
+
     UINT32 offset = (address >> 4) % 8;
     switch(offset) {
-    case 1:
-    	Dcs2kResetWrite(value & 0x10);
-        MidwaySerialPicReset();
-        break;
+		case 1:
+			sound_sync();
+			Dcs2kResetWrite(value & 0x10);
+			if (value & 0x20) MidwaySerialPicReset();
+			break;
     }
 }
 
@@ -117,32 +200,31 @@ UINT16 WolfUnitSecurityRead(UINT32 address)
 
 void WolfUnitSecurityWrite(UINT32 address, UINT16 value)
 {
-    if (address == 0x01600000) {
-        MidwaySerialPicWrite(value);
+	if (address == 0x1600000) {
+		MidwaySerialPicWrite(value);
     }
 }
 
 UINT16 WolfUnitCMOSRead(UINT32 address)
 {
     UINT16 *wn = (UINT16*)DrvNVRAM;
-    UINT32 offset = (address - 0x01400000) >> 1;
+	UINT32 offset = (address & 0x05ffff) >> 4;
     return wn[offset];
 }
-
 
 void WolfUnitCMOSWrite(UINT32 address, UINT16 value)
 {
     if (bCMOSWriteEnable) {
-        UINT16 *wn = (UINT16*) DrvNVRAM;
-        UINT32 offset = (address - 0x01400000) >> 1;
-        wn[offset] = value;
-        bCMOSWriteEnable = false;
+		UINT16 *wn = (UINT16*)DrvNVRAM;
+		UINT32 offset = (address & 0x05ffff) >> 4;
+		wn[offset] = value;
+		bCMOSWriteEnable = false;
     }
 }
 
 void WolfUnitCMOSWriteEnable(UINT32 address, UINT16 value)
 {
-    bCMOSWriteEnable = true;
+	bCMOSWriteEnable = true;
 }
 
 
@@ -161,7 +243,15 @@ void WolfUnitPalWrite(UINT32 address, UINT16 value)
     DrvPaletteB[address>>4] = BurnHighCol(RGB888_r(col),RGB888_g(col),RGB888_b(col),0);
 }
 
+void WolfUnitPalRecalc()
+{
+	for (INT32 i = 0; i < 0x10000; i += 2) {
+		UINT16 value = *(UINT16*)(&DrvPalette[i]);
 
+		UINT32 col = RGB555_2_888(BURN_ENDIAN_SWAP_INT16(value));
+		DrvPaletteB[i>>1] = BurnHighCol(RGB888_r(col),RGB888_g(col),RGB888_b(col),0);
+	}
+}
 
 UINT16 WolfUnitVramRead(UINT32 address)
 {
@@ -194,44 +284,52 @@ UINT16 WolfUnitGfxRead(UINT32 address)
     return base[offset] | (base[offset + 1] << 8);
 }
 
+UINT16 WolfSoundRead(UINT32 address)
+{
+	sound_sync();
+	UINT16 dr = Dcs2kDataRead();
+	Dcs2kRun(20); // "sync" in frame will even things out.
+	return dr & 0xff;
+}
+
+void WolfSoundWrite(UINT32 address, UINT16 value)
+{
+	if (address & 0x1f) return; // ignore bad writes
+	sound_sync();
+	Dcs2kDataWrite(value & 0xff);
+	Dcs2kRun(20);
+}
 
 static void WolfUnitToShift(UINT32 address, void *dst)
 {
-    memcpy(dst, &DrvVRAM16[(address >> 3)], 4096/2);
+	memcpy(dst, &DrvVRAM16[(address >> 3)], 4096/2);
 }
 
 static void WolfUnitFromShift(UINT32 address, void *src)
 {
-    memcpy(&DrvVRAM16[(address >> 3)], src, 4096/2);
+	memcpy(&DrvVRAM16[(address >> 3)], src, 4096/2);
 }
 
 
-static int ScanlineRender(int line, TMS34010Display *info)
+static INT32 ScanlineRender(INT32 line, TMS34010Display *info)
 {
-    if (!pBurnDraw)
-        return 0;
+	if (!pBurnDraw)
+		return 0;
 
-    UINT16 *src = &DrvVRAM16[(info->rowaddr << 9) & 0x3FE00];
-    if (info->rowaddr >= 254)
-        return 0;
+	if (info->rowaddr >= nScreenHeight)
+		return 0;
 
-    int col = info->coladdr << 1;
-    UINT16 *dest = (UINT16*) pBurnDraw + (info->rowaddr * 512);
+	UINT16 *src = &DrvVRAM16[(info->rowaddr << 9) & 0x3FE00];
+	INT32 col = info->coladdr << 1;
+	UINT16 *dest = (UINT16*) pTransDraw + (info->rowaddr * nScreenWidth);
 
-    const int heblnk = info->heblnk;
-    const int hsblnk = info->hsblnk;
-    for (int x = heblnk; x < hsblnk; x++) {
-        dest[x] = DrvPaletteB[src[col++ & 0x1FF] & 0x7FFF];
-    }
+	const INT32 heblnk = info->heblnk;
+	const INT32 hsblnk = info->hsblnk;
+	for (INT32 x = heblnk; x < hsblnk; x++) {
+		dest[x - heblnk] = src[col++ & 0x1FF] & 0x7FFF;
+	}
 
-    // blank
-    for (int x = 0; x < heblnk; x++) {
-        dest[x] = 0;
-    }
-    for (int x = hsblnk; x < info->htotal; x++) {
-        dest[x] = 0;
-    }
-    return 0;
+	return 0;
 }
 
 
@@ -251,15 +349,15 @@ static INT32 LoadGfxBanks()
     char *pRomName;
     struct BurnRomInfo pri;
 
-    for (int i = 0; !BurnDrvGetRomName(&pRomName, i, 0); i++) {
-        bprintf(PRINT_NORMAL, _T("ROM %d\n"), i);
+    for (INT32 i = 0; !BurnDrvGetRomName(&pRomName, i, 0); i++) {
+        //bprintf(PRINT_NORMAL, _T("ROM %d\n"), i);
         BurnDrvGetRomInfo(&pri, i);
         if ((pri.nType & 7) == 3) {
 
             UINT32 addr = WUNIT_GFX_ADR(pri.nType) << 20;
             UINT32 offs = WUNIT_GFX_OFF(pri.nType);
 
-            bprintf(PRINT_NORMAL, _T("ROM %d - %X\n"), i, addr+offs);
+            //bprintf(PRINT_NORMAL, _T("ROM %d - %X\n"), i, addr+offs);
 
             if (BurnLoadRom(DrvGfxROM + addr + offs, i, 4) != 0) {
                 return 1;
@@ -269,9 +367,23 @@ static INT32 LoadGfxBanks()
     return 0;
 }
 
+static void WolfDoReset()
+{
+	memset (AllRam, 0, RamEnd - AllRam);
+
+	bCMOSWriteEnable = false;
+	nVideoBank = 1;
+	nWolfUnitCtrl = 0;
+
+	nGfxBankOffset[0] = 0x000000;
+	nGfxBankOffset[1] = 0x400000;
+
+	TMS34010Reset();
+	Dcs2kReset();
+}
+
 INT32 WolfUnitInit()
 {
-
     MemIndex();
     INT32 nLen = MemEnd - (UINT8 *)0;
 
@@ -297,12 +409,13 @@ INT32 WolfUnitInit()
     if (nRet != 0)
         return 1;
 
-    for (int i = 0; i < 16; i++)
-        nIOShuffle[i] = i % 8;
+    for (INT32 i = 0; i < 16; i++) nIOShuffle[i] = i % 8;
 
+	wwfmania = (strstr(BurnDrvGetTextA(DRV_NAME), "wwfmania") ? 1 : 0);
 
-    Dcs2kInit();
+    Dcs2kInit(DCS_8K, MHz(10));
     Dcs2kMapSoundROM(DrvSoundROM, 0x1000000);
+	Dcs2kSetVolume(5.50);
 
     MidwaySerialPicInit(528);
     MidwaySerialPicReset();
@@ -339,24 +452,26 @@ INT32 WolfUnitInit()
     TMS34010MapHandler(7, 0x01a00000, 0x01a000ff, MAP_READ | MAP_WRITE);
     TMS34010MapHandler(7, 0x01a80000, 0x01a800ff, MAP_READ | MAP_WRITE);
 
-
     TMS34010SetReadHandler(8, WolfUnitGfxRead);
     TMS34010MapHandler(8, 0x02000000, 0x06ffffff, MAP_READ);
+	
+	TMS34010SetHandlers(9, WolfSoundRead, WolfSoundWrite);
+    TMS34010MapHandler(9, 0x01680000, 0x0168001f, MAP_READ | MAP_WRITE);
 
     TMS34010SetHandlers(11, WolfUnitVramRead, WolfUnitVramWrite);
     TMS34010MapHandler(11, 0x00000000, 0x003fffff, MAP_READ | MAP_WRITE);
 
-    
-    Dcs2kBoot();
+	Dcs2kBoot();
 
-    Dcs2kResetWrite(1);
-    Dcs2kResetWrite(0);
+	Dcs2kResetWrite(1);
+	Dcs2kResetWrite(0);
 
-
-    memset(DrvVRAM, 0, 0x400000);
-    DrvInputs[2] = 0;
-
-	TMS34010Reset();
+	GenericTilesInit();
+	
+	BurnSetRefreshRate(54.71);
+	
+	WolfDoReset();
+	
     return 0;
 }
 
@@ -364,29 +479,62 @@ static void MakeInputs()
 {
     DrvInputs[0] = 0;
     DrvInputs[1] = 0;
-    DrvInputs[2] = 0xFD7D | 0x0200;
+    DrvInputs[2] = 0; // not used
     DrvInputs[3] = 0;
 
-    for (int i = 0; i < 16; i++) {
-        if (nWolfUnitJoy1[i] & 1)
-            DrvInputs[0] |= (1 << i);
-        if (nWolfUnitJoy2[i] & 1)
-            DrvInputs[1] |= (1 << i);
-        if (nWolfUnitJoy3[i] & 1)
-            DrvInputs[3] |= (1 << i);
+    for (INT32 i = 0; i < 16; i++) {
+        if (nWolfUnitJoy1[i] & 1) DrvInputs[0] |= (1 << i);
+        if (nWolfUnitJoy2[i] & 1) DrvInputs[1] |= (1 << i);
+        if (nWolfUnitJoy3[i] & 1) DrvInputs[3] |= (1 << i);
     }
+}
 
-    if (nWolfUnitDSW[0] & 1)
-        DrvInputs[2] ^= 0x08000;
+static void HandleDCSIRQ(INT32 line)
+{
+	if (nBurnFPS == 6000) {
+		// 60hz needs 2 irq's/frame (this is here for "force 60hz"/etc)
+		if (line == 0 || line == 144) DcsIRQ(); // 2x per frame
+	} else {
+		// 54.71hz needs 5 irq's every 2 frames
+		if (nCurrentFrame & 1) {
+			if (line == 0 || line == 144) DcsIRQ(); // 2x per frame
+		} else {
+			if (line == 0 || line == 96 || line == 192) DcsIRQ(); // 3x
+		}
+	}
 }
 
 INT32 WolfUnitFrame()
 {
+	if (nWolfReset) WolfDoReset();
+	
 	MakeInputs();
-	static int line = 0;
-    for (int i = 0; i < 288; i++) {
-    	TMS34010Run(2893);//50000000/60/288
-    	line = TMS34010GenerateScanline(line);
+
+	TMS34010NewFrame();
+	Dcs2kNewFrame();
+
+	INT32 nInterleave = 288;
+	INT32 nCyclesTotal[2] = { (INT32)(50000000/8/54.71), (INT32)(10000000 / 54.71) };
+	INT32 nCyclesDone[2] = { 0, 0 };
+
+	for (INT32 i = 0; i < nInterleave; i++) {
+		nCyclesDone[0] += TMS34010Run((nCyclesTotal[0] * (i + 1) / nInterleave) - nCyclesDone[0]);
+
+		TMS34010GenerateScanline(i);
+
+		HandleDCSIRQ(i);
+
+		sound_sync(); // sync to main cpu
+		if (i == nInterleave - 1)
+			sound_sync_end();
+    }
+
+	if (pBurnDraw) {
+		WolfUnitDraw();
+	}
+	
+	if (pBurnSoundOut) {
+        Dcs2kRender(pBurnSoundOut, nBurnSoundLen);
     }
 
     return 0;
@@ -396,18 +544,65 @@ INT32 WolfUnitExit()
 {
 	Dcs2kExit();
 	BurnFree(AllMem);
+	
+	GenericTilesExit();
+
+	wwfmania = 0;
+
     return 0;
 }
 
 INT32 WolfUnitDraw()
 {
-	// TMS34010 renders scanlines direct to pBurnDraw
+	if (nWolfUnitRecalc) {
+		WolfUnitPalRecalc();
+		nWolfUnitRecalc = 0;
+	}
+
+	// TMS34010 renders scanlines direct to pTransDraw
+	BurnTransferCopy(DrvPaletteB);
+
 	return 0;
 }
 
-
-
 INT32 WolfUnitScan(INT32 nAction, INT32 *pnMin)
 {
+	struct BurnArea ba;
+
+	if (pnMin) {
+		*pnMin = 0x029704;
+	}
+
+	if (nAction & ACB_VOLATILE) {
+		memset(&ba, 0, sizeof(ba));
+		ba.Data	  = AllRam;
+		ba.nLen	  = RamEnd - AllRam;
+		ba.szName = "All RAM";
+		BurnAcb(&ba);
+	}
+
+	if (nAction & ACB_DRIVER_DATA) {
+		TMS34010Scan(nAction);
+
+		Dcs2kScan(nAction, pnMin);
+
+		SCAN_VAR(nVideoBank);
+		SCAN_VAR(nWolfUnitCtrl);
+		SCAN_VAR(bCMOSWriteEnable);
+		SCAN_VAR(nGfxBankOffset);
+	}
+
+	if (nAction & ACB_NVRAM) {
+		ba.Data		= DrvNVRAM;
+		ba.nLen		= TOBYTE(0x60000);
+		ba.nAddress	= 0;
+		ba.szName	= "NV RAM";
+		BurnAcb(&ba);
+	}
+
+	if (nAction & ACB_WRITE) {
+		//
+	}
+
 	return 0;
 }

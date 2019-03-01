@@ -229,6 +229,15 @@ void M6502Exit()
 	DebugCPU_M6502Initted = 0;
 }
 
+void M6502SetOpcodeDecode(UINT8 *table)
+{
+#if defined FBA_DEBUG
+	if (!DebugCPU_M6502Initted) bprintf(PRINT_ERROR, _T("M6502SetOpcodeDecode called without init\n"));
+	if (nActiveCPU == -1) bprintf(PRINT_ERROR, _T("M6502SetOpcodeDecode called with no CPU open\n"));
+#endif
+	memcpy (pCurrentCPU->opcode_reorder, table, 0x100);
+}
+
 void M6502Open(INT32 num)
 {
 #if defined FBA_DEBUG
@@ -272,13 +281,15 @@ INT32 M6502GetActive()
 	return nActiveCPU;
 }
 
-void M6502Idle(INT32 nCycles)
+INT32 M6502Idle(INT32 nCycles)
 {
 #if defined FBA_DEBUG
 	if (!DebugCPU_M6502Initted) bprintf(PRINT_ERROR, _T("M6502Idle called without init\n"));
 #endif
 
 	nM6502CyclesTotal += nCycles;
+
+	return nCycles;
 }
 
 void M6502ReleaseSlice()

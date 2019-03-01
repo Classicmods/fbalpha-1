@@ -18,7 +18,7 @@
 #endif
 
 #define _T(x) x
-#define _tfopen rfopen
+#define _tfopen fopen
 #define _tcstol strtol
 #define _tcsstr strstr
 #define _istspace(x) isspace(x)
@@ -34,7 +34,8 @@
 #define _tcsncpy strncpy
 #define _stscanf sscanf
 #define _ftprintf fprintf
-#define dprintf printf
+#define fseeko fseek
+#define ftello ftell
 
 #ifdef UNICODE //Is there any point in this? Can we not just typedef TCHAR to CHAR?
 	typedef wchar_t TCHAR;

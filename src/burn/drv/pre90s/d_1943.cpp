@@ -56,6 +56,8 @@ static UINT8 DrvSpritesOn;
 static UINT8 DrvCharsOn;
 static UINT8 DrvProtValue;
 
+static INT32 bootleg = 0;
+
 static struct BurnInputInfo DrvInputList[] =
 {
 	{"Coin 1"            , BIT_DIGITAL  , DrvInputPort0 + 6, "p1 coin"   },
@@ -715,6 +717,8 @@ STD_ROM_FN(Drvmii)
 
 static UINT8 Drv1943ProtRead()
 {
+	if (bootleg) return 0;
+
 	// This data comes from a table at $21a containing 64 entries, even is "case", odd is return value.
 	switch (DrvProtValue) {
 		case 0x24: return 0x1d;
@@ -751,7 +755,7 @@ static UINT8 Drv1943ProtRead()
 		case 0x25: return 0x04;
 	}
 
-	return 0; // bootlegs expect 0
+	return 0;
 }
 
 static UINT8 __fastcall Drv1943Read1(UINT16 a)
@@ -846,6 +850,13 @@ static void __fastcall Drv1943Write1(UINT16 a, UINT8 d)
 			DrvBg2On = d & 0x20;
 			DrvSpritesOn = d & 0x40;
 			return;
+		}
+
+		case 0xD808:
+		case 0xD868:
+		case 0xD888:
+		case 0xD8A8: {
+			return; // NOP
 		}
 		
 		default: {
@@ -1202,6 +1213,7 @@ static INT32 DrvbLoad()
 
 static INT32 DrvbInit()
 {
+	bootleg = 1;
 	return CommonInit(DrvbLoad);
 }
 
@@ -1285,6 +1297,8 @@ static INT32 DrvbjLoad()
 
 static INT32 DrvbjInit()
 {
+	bootleg = 1;
+
 	return CommonInit(DrvbjLoad);
 }
 
@@ -1366,6 +1380,8 @@ static INT32 Drvb2Load()
 
 static INT32 Drvb2Init()
 {
+	bootleg = 1;
+
 	return CommonInit(Drvb2Load);
 }
 
@@ -1388,7 +1404,8 @@ static INT32 DrvExit()
 	DrvSpritesOn = 0;
 	DrvCharsOn = 0;
 	DrvProtValue = 0;
-	
+	bootleg = 0;
+
 	BurnFree(Mem);
 
 	return 0;
@@ -1633,7 +1650,7 @@ struct BurnDriver BurnDrvNineteen43 = {
 	"1943: The Battle of Midway (Euro)\0", NULL, "Capcom", "Miscellaneous",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_ORIENTATION_VERTICAL | BDF_HISCORE_SUPPORTED, 2, HARWARE_CAPCOM_MISC, GBF_VERSHOOT, 0,
-	NULL, DrvRomInfo, DrvRomName, NULL, NULL, DrvInputInfo, DrvDIPInfo,
+	NULL, DrvRomInfo, DrvRomName, NULL, NULL, NULL, NULL, DrvInputInfo, DrvDIPInfo,
 	DrvInit, DrvExit, DrvFrame, DrvDraw, DrvScan,
 	&DrvRecalc, 0x380, 224, 256, 3, 4
 };
@@ -1643,7 +1660,7 @@ struct BurnDriver BurnDrvNineteen43u = {
 	"1943: The Battle of Midway (US, Rev C)\0", NULL, "Capcom", "Miscellaneous",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_CLONE | BDF_ORIENTATION_VERTICAL | BDF_HISCORE_SUPPORTED, 2, HARWARE_CAPCOM_MISC, GBF_VERSHOOT, 0,
-	NULL, DrvuRomInfo, DrvuRomName, NULL, NULL, DrvInputInfo, DrvDIPInfo,
+	NULL, DrvuRomInfo, DrvuRomName, NULL, NULL, NULL, NULL, DrvInputInfo, DrvDIPInfo,
 	DrvInit, DrvExit, DrvFrame, DrvDraw, DrvScan,
 	&DrvRecalc, 0x380, 224, 256, 3, 4
 };
@@ -1653,7 +1670,7 @@ struct BurnDriver BurnDrvNineteen43ua = {
 	"1943: The Battle of Midway (US)\0", NULL, "Capcom", "Miscellaneous",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_CLONE | BDF_ORIENTATION_VERTICAL | BDF_HISCORE_SUPPORTED, 2, HARWARE_CAPCOM_MISC, GBF_VERSHOOT, 0,
-	NULL, DrvuaRomInfo, DrvuaRomName, NULL, NULL, DrvInputInfo, DrvDIPInfo,
+	NULL, DrvuaRomInfo, DrvuaRomName, NULL, NULL, NULL, NULL, DrvInputInfo, DrvDIPInfo,
 	DrvInit, DrvExit, DrvFrame, DrvDraw, DrvScan,
 	&DrvRecalc, 0x380, 224, 256, 3, 4
 };
@@ -1663,7 +1680,7 @@ struct BurnDriver BurnDrvNineteen43j = {
 	"1943: Midway Kaisen (Japan, Rev B)\0", NULL, "Capcom", "Miscellaneous",
 	L"1943: \u30DF\u30C3\u30C9\u30A6\u30A7\u30A4\u6D77\u6226 (Japan, Rev B)\0", NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_CLONE | BDF_ORIENTATION_VERTICAL | BDF_HISCORE_SUPPORTED, 2, HARWARE_CAPCOM_MISC, GBF_VERSHOOT, 0,
-	NULL, DrvjRomInfo, DrvjRomName, NULL, NULL, DrvInputInfo, DrvDIPInfo,
+	NULL, DrvjRomInfo, DrvjRomName, NULL, NULL, NULL, NULL, DrvInputInfo, DrvDIPInfo,
 	DrvInit, DrvExit, DrvFrame, DrvDraw, DrvScan,
 	&DrvRecalc, 0x380, 224, 256, 3, 4
 };
@@ -1673,7 +1690,7 @@ struct BurnDriver BurnDrvNineteen43ja = {
 	"1943: Midway Kaisen (Japan)\0", NULL, "Capcom", "Miscellaneous",
 	L"1943: \u30DF\u30C3\u30C9\u30A6\u30A7\u30A4\u6D77\u6226 (Japan)\0", NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_CLONE | BDF_ORIENTATION_VERTICAL | BDF_HISCORE_SUPPORTED, 2, HARWARE_CAPCOM_MISC, GBF_VERSHOOT, 0,
-	NULL, DrvjaRomInfo, DrvjaRomName, NULL, NULL, DrvInputInfo, DrvDIPInfo,
+	NULL, DrvjaRomInfo, DrvjaRomName, NULL, NULL, NULL, NULL, DrvInputInfo, DrvDIPInfo,
 	DrvInit, DrvExit, DrvFrame, DrvDraw, DrvScan,
 	&DrvRecalc, 0x380, 224, 256, 3, 4
 };
@@ -1683,7 +1700,7 @@ struct BurnDriver BurnDrvNineteen43jah = {
 	"1943: Midway Kaisen (Japan, no protection hack)\0", NULL, "Capcom", "Miscellaneous",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_CLONE | BDF_ORIENTATION_VERTICAL | BDF_HISCORE_SUPPORTED, 2, HARWARE_CAPCOM_MISC, GBF_VERSHOOT, 0,
-	NULL, DrvjahRomInfo, DrvjahRomName, NULL, NULL, DrvInputInfo, DrvDIPInfo,
+	NULL, DrvjahRomInfo, DrvjahRomName, NULL, NULL, NULL, NULL, DrvInputInfo, DrvDIPInfo,
 	DrvInit, DrvExit, DrvFrame, DrvDraw, DrvScan,
 	&DrvRecalc, 0x380, 224, 256, 3, 4
 };
@@ -1693,7 +1710,7 @@ struct BurnDriver BurnDrvNineteen43b = {
 	"1943: The Battle of Midway (bootleg set 1, hack of Japan set)\0", NULL, "bootleg", "Miscellaneous",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_CLONE | BDF_ORIENTATION_VERTICAL | BDF_BOOTLEG | BDF_HISCORE_SUPPORTED, 2, HARWARE_CAPCOM_MISC, GBF_VERSHOOT, 0,
-	NULL, DrvbRomInfo, DrvbRomName, NULL, NULL, DrvInputInfo, DrvDIPInfo,
+	NULL, DrvbRomInfo, DrvbRomName, NULL, NULL, NULL, NULL, DrvInputInfo, DrvDIPInfo,
 	DrvbInit, DrvExit, DrvFrame, DrvDraw, DrvScan,
 	&DrvRecalc, 0x380, 224, 256, 3, 4
 };
@@ -1703,7 +1720,7 @@ struct BurnDriver BurnDrvNineteen43b2 = {
 	"1943: The Battle of Midway (bootleg set 2, hack of Japan set)\0", NULL, "bootleg", "Miscellaneous",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_CLONE | BDF_ORIENTATION_VERTICAL | BDF_BOOTLEG | BDF_HISCORE_SUPPORTED, 2, HARWARE_CAPCOM_MISC, GBF_VERSHOOT, 0,
-	NULL, Drvb2RomInfo, Drvb2RomName, NULL, NULL, DrvInputInfo, DrvDIPInfo,
+	NULL, Drvb2RomInfo, Drvb2RomName, NULL, NULL, NULL, NULL, DrvInputInfo, DrvDIPInfo,
 	Drvb2Init, DrvExit, DrvFrame, DrvDraw, DrvScan,
 	&DrvRecalc, 0x380, 224, 256, 3, 4
 };
@@ -1713,7 +1730,7 @@ struct BurnDriver BurnDrvNineteen43bj = {
 	"1943: Midway Kaisen (bootleg)\0", NULL, "bootleg", "Miscellaneous",
 	L"1943: \u30DF\u30C3\u30C9\u30A6\u30A7\u30A4\u6D77\u6226 (bootleg)\0", NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_CLONE | BDF_ORIENTATION_VERTICAL | BDF_BOOTLEG | BDF_HISCORE_SUPPORTED, 2, HARWARE_CAPCOM_MISC, GBF_VERSHOOT, 0,
-	NULL, DrvbjRomInfo, DrvbjRomName, NULL, NULL, DrvInputInfo, DrvDIPInfo,
+	NULL, DrvbjRomInfo, DrvbjRomName, NULL, NULL, NULL, NULL, DrvInputInfo, DrvDIPInfo,
 	DrvbjInit, DrvExit, DrvFrame, DrvDraw, DrvScan,
 	&DrvRecalc, 0x380, 224, 256, 3, 4
 };
@@ -1723,7 +1740,7 @@ struct BurnDriver BurnDrvNineteen43kai = {
 	"1943 Kai: Midway Kaisen (Japan)\0", NULL, "Capcom", "Miscellaneous",
 	L"1943 \u6539: \u30DF\u30C3\u30C9\u30A6\u30A7\u30A4\u6D77\u6226 (Japan)\0", NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_ORIENTATION_VERTICAL | BDF_HISCORE_SUPPORTED, 2, HARWARE_CAPCOM_MISC, GBF_VERSHOOT, 0,
-	NULL, DrvkaiRomInfo, DrvkaiRomName, NULL, NULL, DrvInputInfo, DrvDIPInfo,
+	NULL, DrvkaiRomInfo, DrvkaiRomName, NULL, NULL, NULL, NULL, DrvInputInfo, DrvDIPInfo,
 	DrvInit, DrvExit, DrvFrame, DrvDraw, DrvScan,
 	&DrvRecalc, 0x380, 224, 256, 3, 4
 };
@@ -1733,7 +1750,7 @@ struct BurnDriver BurnDrvNineteen43mii = {
 	"1943: The Battle of Midway Mark II (US)\0", NULL, "Capcom", "Miscellaneous",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_ORIENTATION_VERTICAL | BDF_HISCORE_SUPPORTED, 2, HARWARE_CAPCOM_MISC, GBF_VERSHOOT, 0,
-	NULL, DrvmiiRomInfo, DrvmiiRomName, NULL, NULL, DrvInputInfo, DrvDIPInfo,
+	NULL, DrvmiiRomInfo, DrvmiiRomName, NULL, NULL, NULL, NULL, DrvInputInfo, DrvDIPInfo,
 	DrvInit, DrvExit, DrvFrame, DrvDraw, DrvScan,
 	&DrvRecalc, 0x380, 224, 256, 3, 4
 };

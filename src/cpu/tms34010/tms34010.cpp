@@ -3,7 +3,6 @@
  * Licensed under BSD 3-clause.
  */
 #include "tms34010.h"
-#include "memory.h"
 #include "tms34010_memacc.h"
 #include "tms34010_ctrl.h"
 #include "tms34010_mov.h"
@@ -11,6 +10,7 @@
 #include "tms34010_jump.h"
 #include "tms34010_shift.h"
 #include "tms34010_gfx.h"
+#include "stddef.h"
 
 #ifdef TMS34010_DEBUGGER
 #include <algorithm>
@@ -31,10 +31,23 @@ const char *io_regs_names[32] = {
     "DPYTAP", "HCOUNT", "VCOUNT", "DPYADR", "REFCNT"
 };
 
+void scan(cpu_state *cpu, sdword nAction)
+{
+	if (nAction & ACB_DRIVER_DATA) {
+		struct BurnArea ba;
+		memset(&ba, 0, sizeof(ba));
+		ba.Data	  = cpu;
+		ba.nLen	  = STRUCT_SIZE_HELPER(cpu_state, shiftreg);
+		ba.szName = "TMS34010 Regs";
+		BurnAcb(&ba);
+	}
+}
+
 void reset(cpu_state *cpu)
 {
     cpu->pc = rdfield_32(VECT_RESET);
-    cpu->icounter = 0;
+	cpu->icounter = 0;
+	cpu->total_cycles = 0;
     cpu->st = 0x00000010;
     for (int i = 0; i < 15; i++) {
         cpu->a[i].value = 0;
@@ -44,7 +57,11 @@ void reset(cpu_state *cpu)
         cpu->io_regs[i] = 0;
     }
 
-    memset(cpu->shiftreg, 0, 4096*2);
+	memset(cpu->shiftreg, 0, 4096*2);
+
+	cpu->timer_active = 0;
+	cpu->timer_cb = NULL;
+	cpu->timer_cyc = 0;
 }
 
 static void check_irq(cpu_state *cpu)
@@ -74,6 +91,15 @@ static void check_irq(cpu_state *cpu)
     }
 }
 
+static void check_timer(cpu_state *cpu)
+{
+	if (cpu->timer_active && total_cycles(cpu) >= cpu->timer_cyc) {
+		cpu->timer_active = 0;
+		if (cpu->timer_cb)
+			cpu->timer_cb();
+	}
+}
+
 #ifdef TMS34010_DEBUGGER
 static void perform_trace(cpu_state *cpu)
 {
@@ -98,9 +124,12 @@ static void perform_trace(cpu_state *cpu)
 
 void run(cpu_state *cpu, int cycles, bool stepping)
 {
-    cpu->icounter = cycles;
-    while (cpu->icounter > 0) {
+	cpu->cycles_start = cycles;
+	cpu->icounter = cycles;
+	cpu->stop = 0;
+    while (cpu->icounter > 0 && !cpu->stop) {
 
+		check_timer(cpu);
         check_irq(cpu);
 
         if (!stepping) {
@@ -125,23 +154,71 @@ void run(cpu_state *cpu, int cycles, bool stepping)
             return;
     }
     cpu->reason = ICOUNTER_EXPIRED;
+
+	cycles = cycles - cpu->icounter;
+	cpu->total_cycles += cycles;
+	cpu->cycles_start = cpu->icounter = 0;
 }
 
 #else
-void run(cpu_state *cpu, int cycles)
+int run(cpu_state *cpu, int cycles)
 {
-    cpu->icounter = cycles;
-    while (cpu->icounter > 0) {
+	cpu->cycles_start = cycles;
+	cpu->icounter = cycles;
+	cpu->stop = 0;
+    while (cpu->icounter > 0 && !cpu->stop) {
 
+		check_timer(cpu);
         check_irq(cpu);
         cpu->pc &= 0xFFFFFFF0;
         word opcode = mem_read(cpu->pc);
         cpu->last_pc = cpu->pc;
         cpu->pc += 16;
-        opcode_table[(opcode >> 4) & 0xFFF](cpu, opcode);
-    }
+		opcode_table[(opcode >> 4) & 0xFFF](cpu, opcode);
+	}
+
+	cycles = cycles - cpu->icounter;
+	cpu->total_cycles += cycles;
+	cpu->cycles_start = cpu->icounter = 0;
+
+	return cycles;
 }
 #endif
+
+void timer_arm(cpu_state *cpu, i64 cycle, void (*t_cb)())
+{
+	cpu->timer_active = 1;
+	cpu->timer_cyc = cycle;
+	cpu->timer_cb = t_cb;
+}
+
+void stop(cpu_state *cpu)
+{
+	cpu->stop = 1;
+}
+
+i64 total_cycles(cpu_state *cpu)
+{
+	return cpu->total_cycles + (cpu->cycles_start - cpu->icounter);
+}
+
+void new_frame(cpu_state *cpu)
+{
+	if (cpu->timer_active) {
+		cpu->timer_cyc -= cpu->total_cycles;
+	}
+	cpu->total_cycles = 0;
+}
+
+dword get_pc(cpu_state *cpu)
+{
+	return cpu->pc;
+}
+
+dword get_ppc(cpu_state *cpu)
+{
+	return cpu->last_pc;
+}
 
 void generate_irq(cpu_state *cpu, int num)
 {
@@ -193,7 +270,11 @@ dword read_ioreg(cpu_state *cpu, dword addr)
 
 int generate_scanline(cpu_state *cpu, int line, scanline_render_t render)
 {
-    int enabled = cpu->io_regs[DPYCTL] & 0x8000;
+/*	if (line==0) {
+		bprintf(0, _T("vtotal %X   veblnk %X   vsblnk %X.  dpyint %X (enable: %X)\n"), cpu->io_regs[VTOTAL], cpu->io_regs[VEBLNK], cpu->io_regs[VSBLNK], cpu->io_regs[DPYINT], cpu->io_regs[DPYCTL] & 0x8000);
+	}
+*/
+	int enabled = cpu->io_regs[DPYCTL] & 0x8000;
     cpu->io_regs[VCOUNT] = line;
 
     if (enabled && line == cpu->io_regs[DPYINT]) {
@@ -204,7 +285,7 @@ int generate_scanline(cpu_state *cpu, int line, scanline_render_t render)
         cpu->io_regs[DPYADR] = cpu->io_regs[DPYSTRT];
     }
 
-    if (line >= cpu->io_regs[VEBLNK] && line <= cpu->io_regs[VSBLNK] - 1) {
+    if (line >= cpu->io_regs[VEBLNK] && line <= cpu->io_regs[VSBLNK]) {
         word dpyadr = cpu->io_regs[DPYADR];
         if (!(cpu->io_regs[DPYCTL] & 0x0400))
             dpyadr ^= 0xFFFC;

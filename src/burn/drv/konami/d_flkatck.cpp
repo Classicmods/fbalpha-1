@@ -23,6 +23,7 @@ static UINT8 *DrvPalRAM;
 static UINT8 *DrvVidRAM0;
 static UINT8 *DrvVidRAM1;
 static UINT8 *DrvSprRAM;
+static UINT8 *DrvSprBUF;
 
 static UINT32 *DrvPalette;
 static UINT8 DrvRecalc;
@@ -388,6 +389,7 @@ static INT32 MemIndex()
 	DrvVidRAM0		= Next; Next += 0x000800;
 	DrvVidRAM1		= Next; Next += 0x000800;
 	DrvSprRAM		= Next; Next += 0x000800;
+	DrvSprBUF		= Next; Next += 0x000800;
 
 	RamEnd			= Next;
 	MemEnd			= Next;
@@ -445,7 +447,7 @@ static INT32 DrvInit(INT32 rom_layout)
 	HD6309MapMemory(DrvHD6309RAM + 0x0100,	0x0100, 0x03ff, MAP_RAM);
 	HD6309MapMemory(DrvPalRAM,				0x0800, 0x0bff, MAP_RAM);
 	HD6309MapMemory(DrvHD6309RAM + 0x1000,	0x1000, 0x17ff, MAP_RAM);
-	HD6309MapMemory(DrvSprRAM,				0x1800, 0x1fff, MAP_RAM);
+	HD6309MapMemory(DrvSprBUF,				0x1800, 0x1fff, MAP_RAM);
 	HD6309MapMemory(DrvVidRAM0,				0x2000, 0x27ff, MAP_RAM);
 	HD6309MapMemory(DrvVidRAM1,				0x2800, 0x2fff, MAP_RAM);
 	HD6309MapMemory(DrvHD6309RAM + 0x3000,	0x3000, 0x3fff, MAP_RAM);
@@ -579,6 +581,8 @@ static INT32 DrvFrame()
 			if (pBurnDraw) { // missing text in service mode if drawn after vbl
 				DrvDraw();
 			}
+
+			memcpy(DrvSprRAM, DrvSprBUF, 0x800);
 		}
 
 		nCyclesDone[1] += ZetRun(nCyclesTotal[1] / nInterleave);
@@ -676,7 +680,7 @@ struct BurnDriver BurnDrvMx5000 = {
 	"MX5000\0", NULL, "Konami", "GX669",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_ORIENTATION_VERTICAL | BDF_ORIENTATION_FLIPPED, 2, HARDWARE_PREFIX_KONAMI, GBF_VERSHOOT, 0,
-	NULL, mx5000RomInfo, mx5000RomName, NULL, NULL, FlkatckInputInfo, FlkatckDIPInfo,
+	NULL, mx5000RomInfo, mx5000RomName, NULL, NULL, NULL, NULL, FlkatckInputInfo, FlkatckDIPInfo,
 	Mx5000Init, DrvExit, DrvFrame, DrvDraw, DrvScan, &DrvRecalc, 0x200,
 	224, 280, 3, 4
 };
@@ -702,7 +706,7 @@ struct BurnDriver BurnDrvFlkatck = {
 	"Flak Attack (Japan)\0", NULL, "Konami", "GX669",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_CLONE | BDF_ORIENTATION_VERTICAL | BDF_ORIENTATION_FLIPPED, 2, HARDWARE_PREFIX_KONAMI, GBF_VERSHOOT, 0,
-	NULL, flkatckRomInfo, flkatckRomName, NULL, NULL, FlkatckInputInfo, FlkatckDIPInfo,
+	NULL, flkatckRomInfo, flkatckRomName, NULL, NULL, NULL, NULL, FlkatckInputInfo, FlkatckDIPInfo,
 	Mx5000Init, DrvExit, DrvFrame, DrvDraw, DrvScan, &DrvRecalc, 0x200,
 	224, 280, 3, 4
 };
@@ -740,7 +744,7 @@ struct BurnDriver BurnDrvFlkatcka = {
 	"Flak Attack (Japan, PWB 450593 sub-board)\0", NULL, "Konami", "GX669",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_CLONE | BDF_ORIENTATION_VERTICAL | BDF_ORIENTATION_FLIPPED, 2, HARDWARE_PREFIX_KONAMI, GBF_VERSHOOT, 0,
-	NULL, flkatckaRomInfo, flkatckaRomName, NULL, NULL, FlkatckInputInfo, FlkatckDIPInfo,
+	NULL, flkatckaRomInfo, flkatckaRomName, NULL, NULL, NULL, NULL, FlkatckInputInfo, FlkatckDIPInfo,
 	FlkatckaInit, DrvExit, DrvFrame, DrvDraw, DrvScan, &DrvRecalc, 0x200,
 	224, 280, 3, 4
 };

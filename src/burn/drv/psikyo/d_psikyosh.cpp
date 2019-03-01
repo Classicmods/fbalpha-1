@@ -270,7 +270,7 @@ static struct BurnDIPInfo Gunbird2DIPList[]=
 	{0x14, 0x01, 0x40, 0x40, "Off"			},
 	{0x14, 0x01, 0x40, 0x00, "On"			},
 
-	{0   , 0xfe, 0   ,    2, "Region"		},
+	{0   , 0xfe, 0   ,    3, "Region"		},
 	{0x15, 0x01, 0x03, 0x00, "Japan"		},
 	{0x15, 0x01, 0x03, 0x01, "International Ver A."	},
 	{0x15, 0x01, 0x03, 0x02, "International Ver B."	},
@@ -296,7 +296,7 @@ static struct BurnDIPInfo S1945iiiDIPList[]=
 	{0x14, 0x01, 0x40, 0x40, "Off"			},
 	{0x14, 0x01, 0x40, 0x00, "On"			},
 
-	{0   , 0xfe, 0   ,    2, "Region"		},
+	{0   , 0xfe, 0   ,    3, "Region"		},
 	{0x15, 0x01, 0x03, 0x00, "Japan"		},
 	{0x15, 0x01, 0x03, 0x02, "International Ver A."	},
 	{0x15, 0x01, 0x03, 0x01, "International Ver B."	},
@@ -776,7 +776,7 @@ static INT32 DrvInit(INT32 (*LoadCallback)(), INT32 type, INT32 gfx_max, INT32 g
 	Sh2SetReadWordHandler (1,		hack_read_word);
 	Sh2SetReadLongHandler (1,		hack_read_long);
 
-	BurnYMF278BInit(0, DrvSndROM, 0x400000, &DrvIRQCallback, DrvSynchroniseStream);
+	BurnYMF278BInit(cpu_rate, DrvSndROM, 0x400000, &DrvIRQCallback, DrvSynchroniseStream);
 	BurnYMF278BSetAllRoutes(1.00, BURN_SND_ROUTE_BOTH);
 	BurnTimerAttachSh2(cpu_rate);
 
@@ -920,7 +920,7 @@ struct BurnDriver BurnDrvSoldivid = {
 	"Sol Divide - The Sword Of Darkness\0", NULL, "Psikyo", "PS3-V1",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_HISCORE_SUPPORTED, 2, HARDWARE_PSIKYO, GBF_HORSHOOT, 0,
-	NULL, soldividRomInfo, soldividRomName, NULL, NULL, Common3ButtonInputInfo, SoldividDIPInfo,
+	NULL, soldividRomInfo, soldividRomName, NULL, NULL, NULL, NULL, Common3ButtonInputInfo, SoldividDIPInfo,
 	SoldividInit, DrvExit, DrvFrame, PsikyoshDraw, DrvScan, NULL, 0x1400,
 	320, 224, 4, 3
 };
@@ -958,7 +958,7 @@ struct BurnDriver BurnDrvSoldividk = {
 	"Sol Divide - The Sword Of Darkness (Korea)\0", NULL, "Psikyo", "PS3-V1",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_CLONE | BDF_HISCORE_SUPPORTED, 2, HARDWARE_PSIKYO, GBF_HORSHOOT, 0,
-	NULL, soldividkRomInfo, soldividkRomName, NULL, NULL, Common3ButtonInputInfo, SoldividkDIPInfo,
+	NULL, soldividkRomInfo, soldividkRomName, NULL, NULL, NULL, NULL, Common3ButtonInputInfo, SoldividkDIPInfo,
 	SoldividkInit, DrvExit, DrvFrame, PsikyoshDraw, DrvScan, NULL, 0x1400,
 	320, 224, 4, 3
 };
@@ -1028,7 +1028,7 @@ struct BurnDriver BurnDrvS1945ii = {
 	"Strikers 1945 II\0", NULL, "Psikyo", "PS3-V1",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_ORIENTATION_VERTICAL | BDF_HISCORE_SUPPORTED, 2, HARDWARE_PSIKYO, GBF_VERSHOOT, 0,
-	NULL, s1945iiRomInfo, s1945iiRomName, NULL, NULL, Common2ButtonInputInfo, S1945iiDIPInfo,
+	NULL, s1945iiRomInfo, s1945iiRomName, NULL, NULL, NULL, NULL, Common2ButtonInputInfo, S1945iiDIPInfo,
 	S1945iiInit, DrvExit, DrvFrame, PsikyoshDraw, DrvScan, NULL, 0x1400,
 	224, 320, 3, 4
 };
@@ -1111,7 +1111,7 @@ struct BurnDriver BurnDrvDaraku = {
 	"Daraku Tenshi - The Fallen Angels\0", NULL, "Psikyo", "PS3-V1",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_HISCORE_SUPPORTED, 2, HARDWARE_PSIKYO, GBF_VSFIGHT, 0,
-	NULL, darakuRomInfo, darakuRomName, NULL, NULL, Common4ButtonInputInfo, DarakuDIPInfo,
+	NULL, darakuRomInfo, darakuRomName, NULL, NULL, NULL, NULL, Common4ButtonInputInfo, DarakuDIPInfo,
 	DarakuInit, DrvExit, DrvFrame, PsikyoshDraw, DrvScan, NULL, 0x1400,
 	320, 224, 4, 3
 };
@@ -1180,7 +1180,7 @@ struct BurnDriver BurnDrvSbomber = {
 	"Space Bomber (ver. B)\0", NULL, "Psikyo", "PS3-V1",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_ORIENTATION_VERTICAL | BDF_HISCORE_SUPPORTED, 2, HARDWARE_PSIKYO, GBF_SHOOT, 0,
-	NULL, sbomberRomInfo, sbomberRomName, NULL, NULL, Common2ButtonInputInfo, S1945iiDIPInfo,
+	NULL, sbomberRomInfo, sbomberRomName, NULL, NULL, NULL, NULL, Common2ButtonInputInfo, S1945iiDIPInfo,
 	SbomberInit, DrvExit, DrvFrame, PsikyoshDraw, DrvScan, NULL, 0x1400,
 	224, 320, 3, 4
 };
@@ -1216,7 +1216,7 @@ struct BurnDriver BurnDrvSbombera = {
 	"Space Bomber\0", NULL, "Psikyo", "PS3-V1",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_ORIENTATION_VERTICAL | BDF_CLONE | BDF_HISCORE_SUPPORTED, 2, HARDWARE_PSIKYO, GBF_SHOOT, 0,
-	NULL, sbomberaRomInfo, sbomberaRomName, NULL, NULL, Common2ButtonInputInfo, S1945iiDIPInfo,
+	NULL, sbomberaRomInfo, sbomberaRomName, NULL, NULL, NULL, NULL, Common2ButtonInputInfo, S1945iiDIPInfo,
 	SbomberInit, DrvExit, DrvFrame, PsikyoshDraw, DrvScan, NULL, 0x1400,
 	224, 320, 3, 4
 };
@@ -1284,7 +1284,7 @@ struct BurnDriver BurnDrvGunbird2 = {
 	"Gunbird 2 (set 1)\0", NULL, "Psikyo", "PS5",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_ORIENTATION_VERTICAL | BDF_HISCORE_SUPPORTED, 2, HARDWARE_PSIKYO, GBF_VERSHOOT, 0,
-	NULL, gunbird2RomInfo, gunbird2RomName, NULL, NULL, Common3ButtonInputInfo, Gunbird2DIPInfo,
+	NULL, gunbird2RomInfo, gunbird2RomName, NULL, NULL, NULL, NULL, Common3ButtonInputInfo, Gunbird2DIPInfo,
 	Gunbird2Init, DrvExit, DrvFrame, PsikyoshDraw, DrvScan, NULL, 0x1400,
 	224, 320, 3, 4
 };
@@ -1320,7 +1320,7 @@ struct BurnDriver BurnDrvGunbird2a = {
 	"Gunbird 2 (set 2)\0", NULL, "Psikyo", "PS5",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_ORIENTATION_VERTICAL | BDF_CLONE | BDF_HISCORE_SUPPORTED, 2, HARDWARE_PSIKYO, GBF_VERSHOOT, 0,
-	NULL, gunbird2aRomInfo, gunbird2aRomName, NULL, NULL, Common3ButtonInputInfo, Gunbird2DIPInfo,
+	NULL, gunbird2aRomInfo, gunbird2aRomName, NULL, NULL, NULL, NULL, Common3ButtonInputInfo, Gunbird2DIPInfo,
 	Gunbird2Init, DrvExit, DrvFrame, PsikyoshDraw, DrvScan, NULL, 0x1400,
 	224, 320, 3, 4
 };
@@ -1381,7 +1381,7 @@ struct BurnDriver BurnDrvS1945iii = {
 	"Strikers 1945 III (World) / Strikers 1999 (Japan)\0", NULL, "Psikyo", "PS5",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_ORIENTATION_VERTICAL | BDF_HISCORE_SUPPORTED, 2, HARDWARE_PSIKYO, GBF_VERSHOOT, 0,
-	NULL, s1945iiiRomInfo, s1945iiiRomName, NULL, NULL, Common3ButtonInputInfo, S1945iiiDIPInfo,
+	NULL, s1945iiiRomInfo, s1945iiiRomName, NULL, NULL, NULL, NULL, Common3ButtonInputInfo, S1945iiiDIPInfo,
 	S1945iiiInit, DrvExit, DrvFrame, PsikyoshDraw, DrvScan, NULL, 0x1400,
 	224, 320, 3, 4
 };
@@ -1477,7 +1477,7 @@ struct BurnDriver BurnDrvDragnblz = {
 	"Dragon Blaze\0", NULL, "Psikyo", "PS5V2",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_ORIENTATION_VERTICAL | BDF_HISCORE_SUPPORTED, 2, HARDWARE_PSIKYO, GBF_VERSHOOT, 0,
-	NULL, dragnblzRomInfo, dragnblzRomName, NULL, NULL, Common3ButtonInputInfo, DragnblzDIPInfo,
+	NULL, dragnblzRomInfo, dragnblzRomName, NULL, NULL, NULL, NULL, Common3ButtonInputInfo, DragnblzDIPInfo,
 	DragnblzInit, DrvExit, DrvFrame, PsikyoshDraw, DrvScan, NULL, 0x1400,
 	224, 320, 3, 4
 };
@@ -1549,7 +1549,7 @@ struct BurnDriver BurnDrvGnbarich = {
 	"Gunbarich\0", NULL, "Psikyo", "PS5V2",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_ORIENTATION_VERTICAL | BDF_HISCORE_SUPPORTED, 2, HARDWARE_PSIKYO, GBF_BREAKOUT, 0,
-	NULL, gnbarichRomInfo, gnbarichRomName, NULL, NULL, Common3ButtonInputInfo, S1945iiiDIPInfo,
+	NULL, gnbarichRomInfo, gnbarichRomName, NULL, NULL, NULL, NULL, Common3ButtonInputInfo, S1945iiiDIPInfo,
 	GnbarichInit, DrvExit, DrvFrame, PsikyoshDraw, DrvScan, NULL, 0x1400,
 	224, 320, 3, 4
 };
@@ -1619,7 +1619,7 @@ struct BurnDriver BurnDrvMjgtaste = {
 	"Mahjong G-Taste\0", NULL, "Psikyo", "PS5V2",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_HISCORE_SUPPORTED, 2, HARDWARE_PSIKYO, GBF_MAHJONG, 0,
-	NULL, mjgtasteRomInfo, mjgtasteRomName, NULL, NULL, Common3ButtonInputInfo, Tgm2DIPInfo,
+	NULL, mjgtasteRomInfo, mjgtasteRomName, NULL, NULL, NULL, NULL, Common3ButtonInputInfo, Tgm2DIPInfo,
 	MjgtasteInit, DrvExit, DrvFrame, PsikyoshDraw, DrvScan, NULL, 0x1400,
 	320, 224, 4, 3
 };
@@ -1690,7 +1690,7 @@ static INT32 Tgm2Init()
 	speedhack_address = 0x6000c;
 	speedhack_pc[0] = 0x0602895a;
 	speedhack_pc[1] = 0x06028cac;
-	speedhack_pc[2] = 0x06029272;
+	//speedhack_pc[2] = 0x06029272; // bad!! (game logic, etc)
 	speedhack_pc[3] = 0x06028ef2;
 
 	return DrvInit(Tgm2LoadCallback, 1, 0x2c00000, 0x0c00000);
@@ -1701,7 +1701,7 @@ struct BurnDriver BurnDrvTgm2 = {
 	"Tetris the Absolute The Grand Master 2\0", NULL, "Arika", "PS5V2",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_HISCORE_SUPPORTED, 2, HARDWARE_PSIKYO, GBF_PUZZLE, 0,
-	NULL, tgm2RomInfo, tgm2RomName, NULL, NULL, Common3ButtonInputInfo, Tgm2DIPInfo,
+	NULL, tgm2RomInfo, tgm2RomName, NULL, NULL, NULL, NULL, Common3ButtonInputInfo, Tgm2DIPInfo,
 	Tgm2Init, DrvExit, DrvFrame, PsikyoshDraw, DrvScan, NULL, 0x1400,
 	320, 240, 4, 3
 };
@@ -1743,7 +1743,7 @@ static INT32 Tgm2pInit()
 	speedhack_address = 0x6000c;
 	speedhack_pc[0] = 0x0602ae5a;
 	speedhack_pc[1] = 0x0602b1ac;
-	speedhack_pc[2] = 0x0602b772;
+	//speedhack_pc[2] = 0x0602b772; // bad!! (game logic, etc)
 	speedhack_pc[3] = 0x0602b3f2;
 
 	return DrvInit(Tgm2LoadCallback, 1, 0x2c00000, 0x0c00000);
@@ -1754,7 +1754,7 @@ struct BurnDriver BurnDrvTgm2p = {
 	"Tetris the Absolute The Grand Master 2 Plus\0", NULL, "Arika", "PS5V2",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_CLONE | BDF_HISCORE_SUPPORTED, 2, HARDWARE_PSIKYO, GBF_PUZZLE, 0,
-	NULL, tgm2pRomInfo, tgm2pRomName, NULL, NULL, Common3ButtonInputInfo, Tgm2DIPInfo,
+	NULL, tgm2pRomInfo, tgm2pRomName, NULL, NULL, NULL, NULL, Common3ButtonInputInfo, Tgm2DIPInfo,
 	Tgm2pInit, DrvExit, DrvFrame, PsikyoshDraw, DrvScan, NULL, 0x1400,
 	320, 240, 4, 3
 };

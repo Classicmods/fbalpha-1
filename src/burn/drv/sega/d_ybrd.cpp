@@ -940,6 +940,73 @@ static struct BurnRomInfo Glocr360RomDesc[] = {
 STD_ROM_PICK(Glocr360)
 STD_ROM_FN(Glocr360)
 
+static struct BurnRomInfo Glocr360jRomDesc[] = {
+	{ "epr-13321a.25",    0x20000, 0x7c80f03f, SYS16_ROM_PROG | BRF_ESS | BRF_PRG },
+	{ "epr-13320a.24",    0x20000, 0x9d3116fb, SYS16_ROM_PROG | BRF_ESS | BRF_PRG },
+	{ "epr-13323a.27",    0x20000, 0x02e24a33, SYS16_ROM_PROG | BRF_ESS | BRF_PRG },
+	{ "epr-13322a.26",    0x20000, 0x94f67740, SYS16_ROM_PROG | BRF_ESS | BRF_PRG },
+	
+	{ "epr-13327.81",     0x20000, 0x627036f9, SYS16_ROM_PROG2 | BRF_ESS | BRF_PRG },
+	{ "epr-13326.80",     0x20000, 0x162ac233, SYS16_ROM_PROG2 | BRF_ESS | BRF_PRG },
+	
+	{ "epr-13325a.54",    0x20000, 0xaba307e5, SYS16_ROM_PROG3 | BRF_ESS | BRF_PRG },
+	{ "epr-13324a.53",    0x20000, 0xeb1b19e5, SYS16_ROM_PROG3 | BRF_ESS | BRF_PRG },
+	
+	{ "epr-13037.14",     0x80000, 0xb801a250, SYS16_ROM_SPRITES | BRF_GRA },
+	{ "epr-13039.16",     0x80000, 0xd7e1266d, SYS16_ROM_SPRITES | BRF_GRA },
+	{ "epr-13038.15",     0x80000, 0x0b2edb6d, SYS16_ROM_SPRITES | BRF_GRA },
+	{ "epr-13040.17",     0x80000, 0x4aeb3a85, SYS16_ROM_SPRITES | BRF_GRA },
+	
+	{ "epr-13048.67",     0x80000, 0xfe1eb0dd, SYS16_ROM_SPRITES2 | BRF_GRA },
+	{ "epr-13056.75",     0x80000, 0x5904f8e6, SYS16_ROM_SPRITES2 | BRF_GRA },
+	{ "epr-13044.63",     0x80000, 0x4d931f89, SYS16_ROM_SPRITES2 | BRF_GRA },
+	{ "epr-13052.71",     0x80000, 0x0291f040, SYS16_ROM_SPRITES2 | BRF_GRA },
+	{ "epr-13064.86",     0x80000, 0x5f8e651b, SYS16_ROM_SPRITES2 | BRF_GRA },
+	{ "epr-13072.114",    0x80000, 0x6b85641a, SYS16_ROM_SPRITES2 | BRF_GRA },
+	{ "epr-13060.82",     0x80000, 0xee16ad97, SYS16_ROM_SPRITES2 | BRF_GRA },
+	{ "epr-13068.110",    0x80000, 0x64d52bbb, SYS16_ROM_SPRITES2 | BRF_GRA },
+	
+	{ "epr-13047.66",     0x80000, 0x53340832, SYS16_ROM_SPRITES2 | BRF_GRA },
+	{ "epr-13055.74",     0x80000, 0x39b6b665, SYS16_ROM_SPRITES2 | BRF_GRA },
+	{ "epr-13043.62",     0x80000, 0x208f16fd, SYS16_ROM_SPRITES2 | BRF_GRA },
+	{ "epr-13051.70",     0x80000, 0xad62cbd4, SYS16_ROM_SPRITES2 | BRF_GRA },
+	{ "epr-13063.85",     0x80000, 0xc580bf6d, SYS16_ROM_SPRITES2 | BRF_GRA },
+	{ "epr-13071.113",    0x80000, 0xdf99ef99, SYS16_ROM_SPRITES2 | BRF_GRA },
+	{ "epr-13059.81",     0x80000, 0x4c982558, SYS16_ROM_SPRITES2 | BRF_GRA },
+	{ "epr-13067.109",    0x80000, 0xf97f6119, SYS16_ROM_SPRITES2 | BRF_GRA },
+	
+	{ "epr-13331.65",     0x80000, 0x8ea8febe, SYS16_ROM_SPRITES2 | BRF_GRA },
+	{ "epr-13333.73",     0x80000, 0x5bcd37d4, SYS16_ROM_SPRITES2 | BRF_GRA },
+	{ "epr-13330.61",     0x80000, 0x1e325d52, SYS16_ROM_SPRITES2 | BRF_GRA },
+	{ "epr-13332.69",     0x80000, 0x8fd8067e, SYS16_ROM_SPRITES2 | BRF_GRA },
+	{ "epr-13335.84",     0x80000, 0x98ea420b, SYS16_ROM_SPRITES2 | BRF_GRA },
+	{ "epr-13337.112",    0x80000, 0xf55f00a4, SYS16_ROM_SPRITES2 | BRF_GRA },
+	{ "epr-13334.80",     0x80000, 0x72725060, SYS16_ROM_SPRITES2 | BRF_GRA },
+	{ "epr-13336.108",    0x80000, 0xe2d4d477, SYS16_ROM_SPRITES2 | BRF_GRA },
+	
+	{ "epr-13045.64",     0x80000, 0x54d5bc6d, SYS16_ROM_SPRITES2 | BRF_GRA },
+	{ "epr-13053.72",     0x80000, 0x9502af13, SYS16_ROM_SPRITES2 | BRF_GRA },
+	{ "epr-13041.60",     0x80000, 0xd0a7402c, SYS16_ROM_SPRITES2 | BRF_GRA },
+	{ "epr-13049.68",     0x80000, 0x5b9c0b6c, SYS16_ROM_SPRITES2 | BRF_GRA },
+	{ "epr-13061.83",     0x80000, 0x7b95ec3b, SYS16_ROM_SPRITES2 | BRF_GRA },
+	{ "epr-13069.111",    0x80000, 0xe1f538f0, SYS16_ROM_SPRITES2 | BRF_GRA },
+	{ "epr-13057.79",     0x80000, 0x73baefee, SYS16_ROM_SPRITES2 | BRF_GRA },
+	{ "epr-13065.107",    0x80000, 0x8937a655, SYS16_ROM_SPRITES2 | BRF_GRA },
+		
+	{ "epr-13328.102",    0x10000, 0x751cb2b1, SYS16_ROM_Z80PROG | BRF_ESS | BRF_PRG },
+	
+	{ "epr-13036.107",    0x80000, 0x7890c26c, SYS16_ROM_PCMDATA | BRF_SND },
+	{ "epr-13035.106",    0x80000, 0x009fa13e, SYS16_ROM_PCMDATA | BRF_SND },
+	{ "epr-13329.105",    0x80000, 0x87a14f6b, SYS16_ROM_PCMDATA | BRF_SND },
+	
+	{ "epr-13317.ic22",   0x20000, 0xb9f14f35, BRF_OPT },
+	{ "epr-13316.ic27",   0x08000, 0x83d6c6a3, BRF_OPT },
+};
+
+
+STD_ROM_PICK(Glocr360j)
+STD_ROM_FN(Glocr360j)
+
 static struct BurnRomInfo PdriftRomDesc[] = {
 	{ "epr-12017.25",     0x20000, 0x31190322, SYS16_ROM_PROG | BRF_ESS | BRF_PRG },
 	{ "epr-12016.24",     0x20000, 0x499f64a6, SYS16_ROM_PROG | BRF_ESS | BRF_PRG },
@@ -2091,7 +2158,7 @@ struct BurnDriver BurnDrvGforce2 = {
 	"Galaxy Force 2\0", NULL, "Sega", "Y-Board",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING, 2, HARDWARE_SEGA_SYSTEMY, GBF_SHOOT, 0,
-	NULL, Gforce2RomInfo, Gforce2RomName, NULL, NULL, Gforce2InputInfo, Gforce2DIPInfo,
+	NULL, Gforce2RomInfo, Gforce2RomName, NULL, NULL, NULL, NULL, Gforce2InputInfo, Gforce2DIPInfo,
 	Gforce2Init, YBoardExit, YBoardFrame, YBoardRender, YBoardScan,
 	NULL, 0x6000, 320, 224, 4, 3
 };
@@ -2101,7 +2168,7 @@ struct BurnDriver BurnDrvGforce2sd = {
 	"Galaxy Force 2 (Super Deluxe unit)\0", NULL, "Sega", "Y-Board",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_SYSTEMY, GBF_SHOOT, 0,
-	NULL, Gforce2sdRomInfo, Gforce2sdRomName, NULL, NULL, Gforce2InputInfo, Gforce2DIPInfo,
+	NULL, Gforce2sdRomInfo, Gforce2sdRomName, NULL, NULL, NULL, NULL, Gforce2InputInfo, Gforce2DIPInfo,
 	Gforce2Init, YBoardExit, YBoardFrame, YBoardRender, YBoardScan,
 	NULL, 0x6000, 320, 224, 4, 3
 };
@@ -2111,7 +2178,7 @@ struct BurnDriver BurnDrvGforce2j = {
 	"Galaxy Force 2 (Japan)\0", NULL, "Sega", "Y-Board",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_SYSTEMY, GBF_SHOOT, 0,
-	NULL, Gforce2jRomInfo, Gforce2jRomName, NULL, NULL, Gforce2InputInfo, Gforce2DIPInfo,
+	NULL, Gforce2jRomInfo, Gforce2jRomName, NULL, NULL, NULL, NULL, Gforce2InputInfo, Gforce2DIPInfo,
 	Gforce2Init, YBoardExit, YBoardFrame, YBoardRender, YBoardScan,
 	NULL, 0x6000, 320, 224, 4, 3
 };
@@ -2121,7 +2188,7 @@ struct BurnDriver BurnDrvGforce2ja = {
 	"Galaxy Force 2 (Japan, Rev A)\0", NULL, "Sega", "Y-Board",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_SYSTEMY, GBF_SHOOT, 0,
-	NULL, Gforce2jaRomInfo, Gforce2jaRomName, NULL, NULL, Gforce2InputInfo, Gforce2DIPInfo,
+	NULL, Gforce2jaRomInfo, Gforce2jaRomName, NULL, NULL, NULL, NULL, Gforce2InputInfo, Gforce2DIPInfo,
 	Gforce2Init, YBoardExit, YBoardFrame, YBoardRender, YBoardScan,
 	NULL, 0x6000, 320, 224, 4, 3
 };
@@ -2131,7 +2198,7 @@ struct BurnDriver BurnDrvGloc = {
 	"G-LOC Air Battle (World)\0", NULL, "Sega", "Y-Board",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING, 2, HARDWARE_SEGA_SYSTEMY, GBF_SHOOT, 0,
-	NULL, GlocRomInfo, GlocRomName, NULL, NULL, GlocInputInfo, GlocDIPInfo,
+	NULL, GlocRomInfo, GlocRomName, NULL, NULL, NULL, NULL, GlocInputInfo, GlocDIPInfo,
 	GlocInit, YBoardExit, YBoardFrame, YBoardRender, YBoardScan,
 	NULL, 0x6000, 320, 224, 4, 3
 };
@@ -2141,17 +2208,27 @@ struct BurnDriver BurnDrvGlocu = {
 	"G-LOC Air Battle (US)\0", NULL, "Sega", "Y-Board",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_SYSTEMY, GBF_SHOOT, 0,
-	NULL, GlocuRomInfo, GlocuRomName, NULL, NULL, GlocInputInfo, GlocDIPInfo,
+	NULL, GlocuRomInfo, GlocuRomName, NULL, NULL, NULL, NULL, GlocInputInfo, GlocDIPInfo,
 	GlocInit, YBoardExit, YBoardFrame, YBoardRender, YBoardScan,
 	NULL, 0x6000, 320, 224, 4, 3
 };
 
 struct BurnDriver BurnDrvGlocr360 = {
 	"glocr360", "gloc", NULL, NULL, "1990",
-	"G-LOC R360\0", NULL, "Sega", "Y-Board",
+	"G-LOC R360 (World)\0", NULL, "Sega", "Y-Board",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_SYSTEMY, GBF_SHOOT, 0,
-	NULL, Glocr360RomInfo, Glocr360RomName, NULL, NULL, Glocr360InputInfo, Glocr360DIPInfo,
+	NULL, Glocr360RomInfo, Glocr360RomName, NULL, NULL, NULL, NULL, Glocr360InputInfo, Glocr360DIPInfo,
+	Glocr360Init, YBoardExit, YBoardFrame, YBoardRender, YBoardScan,
+	NULL, 0x6000, 320, 224, 4, 3
+};
+
+struct BurnDriver BurnDrvGlocr360j = {
+	"glocr360j", "gloc", NULL, NULL, "1990",
+	"G-LOC R360 (Japan)\0", NULL, "Sega", "Y-Board",
+	NULL, NULL, NULL, NULL,
+	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_SYSTEMY, GBF_SHOOT, 0,
+	NULL, Glocr360jRomInfo, Glocr360jRomName, NULL, NULL, NULL, NULL, Glocr360InputInfo, Glocr360DIPInfo,
 	Glocr360Init, YBoardExit, YBoardFrame, YBoardRender, YBoardScan,
 	NULL, 0x6000, 320, 224, 4, 3
 };
@@ -2161,7 +2238,7 @@ struct BurnDriver BurnDrvPdrift = {
 	"Power Drift (World, Rev A)\0", "Select Auto-Center preset in Input Configuration", "Sega", "Y-Board",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING, 2, HARDWARE_SEGA_SYSTEMY, GBF_RACING, 0,
-	NULL, PdriftRomInfo, PdriftRomName, NULL, NULL, PdriftInputInfo, PdriftDIPInfo,
+	NULL, PdriftRomInfo, PdriftRomName, NULL, NULL, NULL, NULL, PdriftInputInfo, PdriftDIPInfo,
 	PdriftInit, YBoardExit, YBoardFrame, YBoardRender, YBoardScan,
 	NULL, 0x6000, 320, 224, 4, 3
 };
@@ -2171,7 +2248,7 @@ struct BurnDriver BurnDrvPdrifta = {
 	"Power Drift (World)\0", "Select Auto-Center preset in Input Configuration", "Sega", "Y-Board",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_SYSTEMY, GBF_RACING, 0,
-	NULL, PdriftaRomInfo, PdriftaRomName, NULL, NULL, PdriftInputInfo, PdriftDIPInfo,
+	NULL, PdriftaRomInfo, PdriftaRomName, NULL, NULL, NULL, NULL, PdriftInputInfo, PdriftDIPInfo,
 	PdriftInit, YBoardExit, YBoardFrame, YBoardRender, YBoardScan,
 	NULL, 0x6000, 320, 224, 4, 3
 };
@@ -2181,7 +2258,7 @@ struct BurnDriver BurnDrvPdrifte = {
 	"Power Drift (World, Earlier)\0", "Select Auto-Center preset in Input Configuration", "Sega", "Y-Board",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_SYSTEMY, GBF_RACING, 0,
-	NULL, PdrifteRomInfo, PdrifteRomName, NULL, NULL, PdriftInputInfo, PdrifteDIPInfo,
+	NULL, PdrifteRomInfo, PdrifteRomName, NULL, NULL, NULL, NULL, PdriftInputInfo, PdrifteDIPInfo,
 	PdriftInit, YBoardExit, YBoardFrame, YBoardRender, YBoardScan,
 	NULL, 0x6000, 320, 224, 4, 3
 };
@@ -2191,7 +2268,7 @@ struct BurnDriver BurnDrvPdriftj = {
 	"Power Drift (Japan)\0", "Select Auto-Center preset in Input Configuration", "Sega", "Y-Board",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_SYSTEMY, GBF_RACING, 0,
-	NULL, PdriftjRomInfo, PdriftjRomName, NULL, NULL, PdriftInputInfo, PdriftjDIPInfo,
+	NULL, PdriftjRomInfo, PdriftjRomName, NULL, NULL, NULL, NULL, PdriftInputInfo, PdriftjDIPInfo,
 	PdriftInit, YBoardExit, YBoardFrame, YBoardRender, YBoardScan,
 	NULL, 0x6000, 320, 224, 4, 3
 };
@@ -2201,7 +2278,7 @@ struct BurnDriver BurnDrvRchase = {
 	"Rail Chase (World)\0", NULL, "Sega", "Y-Board",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING, 2, HARDWARE_SEGA_SYSTEMY, GBF_SHOOT, 0,
-	NULL, RchaseRomInfo, RchaseRomName, NULL, NULL, RchaseInputInfo, RchaseDIPInfo,
+	NULL, RchaseRomInfo, RchaseRomName, NULL, NULL, NULL, NULL, RchaseInputInfo, RchaseDIPInfo,
 	RchaseInit, YBoardExit, YBoardFrame, YBoardRender, YBoardScan,
 	NULL, 0x6000, 320, 224, 4, 3
 };
@@ -2211,7 +2288,7 @@ struct BurnDriver BurnDrvRchasej = {
 	"Rail Chase (Japan)\0", NULL, "Sega", "Y-Board",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_SYSTEMY, GBF_SHOOT, 0,
-	NULL, RchasejRomInfo, RchasejRomName, NULL, NULL, RchaseInputInfo, RchaseDIPInfo,
+	NULL, RchasejRomInfo, RchasejRomName, NULL, NULL, NULL, NULL, RchaseInputInfo, RchaseDIPInfo,
 	RchaseInit, YBoardExit, YBoardFrame, YBoardRender, YBoardScan,
 	NULL, 0x6000, 320, 224, 4, 3
 };
@@ -2221,7 +2298,7 @@ struct BurnDriver BurnDrvStrkfgtr = {
 	"Strike Fighter (World)\0", NULL, "Sega", "Y-Board",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING, 2, HARDWARE_SEGA_SYSTEMY, GBF_SHOOT, 0,
-	NULL, StrkfgtrRomInfo, StrkfgtrRomName, NULL, NULL, GlocInputInfo, StrkfgtrDIPInfo,
+	NULL, StrkfgtrRomInfo, StrkfgtrRomName, NULL, NULL, NULL, NULL, GlocInputInfo, StrkfgtrDIPInfo,
 	GlocInit, YBoardExit, YBoardFrame, YBoardRender, YBoardScan,
 	NULL, 0x6000, 320, 224, 4, 3
 };
@@ -2231,7 +2308,7 @@ struct BurnDriver BurnDrvStrkfgtrj = {
 	"Strike Fighter (Japan)\0", NULL, "Sega", "Y-Board",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_SYSTEMY, GBF_SHOOT, 0,
-	NULL, StrkfgtrjRomInfo, StrkfgtrjRomName, NULL, NULL, GlocInputInfo, StrkfgtrDIPInfo,
+	NULL, StrkfgtrjRomInfo, StrkfgtrjRomName, NULL, NULL, NULL, NULL, GlocInputInfo, StrkfgtrDIPInfo,
 	GlocInit, YBoardExit, YBoardFrame, YBoardRender, YBoardScan,
 	NULL, 0x6000, 320, 224, 4, 3
 };

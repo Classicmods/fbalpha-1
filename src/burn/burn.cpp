@@ -471,6 +471,24 @@ extern "C" INT32 BurnDrvGetSampleName(char** pszName, UINT32 i, INT32 nAka)		// 
 	return pDriver[nBurnDrvActive]->GetSampleName(pszName, i, nAka);
 }
 
+extern "C" INT32 BurnDrvGetHDDInfo(struct BurnHDDInfo* pri, UINT32 i)		// Forward to drivers function
+{
+	if (pDriver[nBurnDrvActive]->GetHDDInfo) {
+		return pDriver[nBurnDrvActive]->GetHDDInfo(pri, i);
+	} else {
+		return 0;
+	}
+}
+
+extern "C" INT32 BurnDrvGetHDDName(char** pszName, UINT32 i, INT32 nAka)		// Forward to drivers function
+{
+	if (pDriver[nBurnDrvActive]->GetHDDName) {
+		return pDriver[nBurnDrvActive]->GetHDDName(pszName, i, nAka);
+	} else {
+		return 0;
+	}
+}
+
 // Get the screen size
 extern "C" INT32 BurnDrvGetVisibleSize(INT32* pnWidth, INT32* pnHeight)
 {

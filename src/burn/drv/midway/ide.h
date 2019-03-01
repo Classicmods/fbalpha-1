@@ -2,7 +2,7 @@
 #define IDE
 
 #include <string>
-#include <fstream>
+#include "burnint.h"
 
 namespace ide
 {
@@ -12,18 +12,21 @@ using namespace std;
 class ide_disk
 {
 public:
-    void write(unsigned offset, unsigned value);
+    void reset();
+	void write(unsigned offset, unsigned value);
     void write_alternate(unsigned offset, unsigned value);
     unsigned read(unsigned offset);
     unsigned read_alternate(unsigned offset);
     bool load_disk_image(const string &filename);
+	void close_disk_image();
+	int load_hdd_image(int idx);
     ide_disk();
+    ~ide_disk();
 
     void set_irq_callback(void (*irq)(int state));
 
 
 private:
-    void reset();
     void execute();
     void build_identify_buffer();
 
@@ -79,7 +82,7 @@ private:
     int m_features;
     int m_command;
 
-    fstream m_disk_image;
+    FILE * m_disk_image;
 
 };
 

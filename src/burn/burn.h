@@ -26,6 +26,7 @@
 
 extern TCHAR szAppHiscorePath[MAX_PATH];
 extern TCHAR szAppSamplesPath[MAX_PATH];
+extern TCHAR szAppHDDPath[MAX_PATH];
 extern TCHAR szAppBlendPath[MAX_PATH];
 extern TCHAR szAppEEPROMPath[MAX_PATH];
 
@@ -147,6 +148,12 @@ struct BurnRomInfo {
 struct BurnSampleInfo {
 	char szName[100];
 	UINT32 nFlags;
+};
+
+struct BurnHDDInfo {
+	char szName[100];
+	UINT32 nLen;
+	UINT32 nCrc;
 };
 
 // Inputs
@@ -337,6 +344,8 @@ INT32 BurnDrvGetGenreFlags();
 INT32 BurnDrvGetFamilyFlags();
 INT32 BurnDrvGetSampleInfo(struct BurnSampleInfo *pri, UINT32 i);
 INT32 BurnDrvGetSampleName(char** pszName, UINT32 i, INT32 nAka);
+INT32 BurnDrvGetHDDInfo(struct BurnHDDInfo *pri, UINT32 i);
+INT32 BurnDrvGetHDDName(char** pszName, UINT32 i, INT32 nAka);
 
 void Reinitialise();
 
@@ -364,7 +373,7 @@ void IpsApplyPatches(UINT8* base, char* rom_name);
 // Flags for the hardware member
 // Format: 0xDDEEFFFF, where EE: Manufacturer, DD: Hardware platform, FFFF: Flags (used by driver)
 
-#define HARDWARE_PUBLIC_MASK							(0xFFFF0000)
+#define HARDWARE_PUBLIC_MASK							(0x7FFF0000)
 
 #define HARDWARE_PREFIX_CARTRIDGE						((INT32)0x80000000)
 
@@ -615,6 +624,12 @@ void IpsApplyPatches(UINT8* base, char* rom_name);
 #define HARDWARE_PCENGINE_SGX							(HARDWARE_PREFIX_PCENGINE | 0x00030000)
 
 #define HARDWARE_SPECTRUM								(HARDWARE_PREFIX_SPECTRUM)
+
+#define HARDWARE_MIDWAY_KINST							(HARDWARE_PREFIX_MIDWAY | 0x00010000)
+#define HARDWARE_MIDWAY_TUNIT							(HARDWARE_PREFIX_MIDWAY | 0x00020000)
+#define HARDWARE_MIDWAY_WUNIT							(HARDWARE_PREFIX_MIDWAY | 0x00030000)
+#define HARDWARE_MIDWAY_YUNIT							(HARDWARE_PREFIX_MIDWAY | 0x00040000)
+
 
 // flags for the genre member
 #define GBF_HORSHOOT									(1 << 0)

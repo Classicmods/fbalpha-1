@@ -679,6 +679,16 @@ static INT32 DrvDraw()
 	return 0;
 }
 
+static void DrvClearOpposites(UINT8* nJoystickInputs)
+{
+	if ((*nJoystickInputs & 0x03) == 0x00) {
+		*nJoystickInputs |= 0x03;
+	}
+	if ((*nJoystickInputs & 0x0c) == 0x00) {
+		*nJoystickInputs |= 0x0c;
+	}
+}
+
 static INT32 DrvFrame()
 {
 	if (DrvReset) {
@@ -694,6 +704,10 @@ static INT32 DrvFrame()
 			DrvInputs[3] ^= (DrvJoy4[i] & 1) << i;
 			DrvInputs[4] ^= (DrvJoy5[i] & 1) << i;
 		}
+		DrvClearOpposites(&DrvInputs[0]);
+		DrvClearOpposites(&DrvInputs[1]);
+		DrvClearOpposites(&DrvInputs[2]);
+		DrvClearOpposites(&DrvInputs[3]);
 	}
 
 	ZetNewFrame();
@@ -823,7 +837,7 @@ struct BurnDriver BurnDrvTbowl = {
 	"Tecmo Bowl (World, set 1)\0", NULL, "Tecmo", "hardware",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING, 2, HARDWARE_MISC_PRE90S, GBF_SPORTSMISC, 0,
-	NULL, tbowlRomInfo, tbowlRomName, NULL, NULL, TbowlInputInfo, TbowlDIPInfo,
+	NULL, tbowlRomInfo, tbowlRomName, NULL, NULL, NULL, NULL, TbowlInputInfo, TbowlDIPInfo,
 	DrvInit, DrvExit, DrvFrame, DrvDraw, DrvScan, &DrvRecalc, 0x800,
 	512, 224, 8, 3
 };
@@ -873,7 +887,7 @@ struct BurnDriver BurnDrvTbowla = {
 	"Tecmo Bowl (World, set 2)\0", NULL, "Tecmo", "hardware",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_MISC_PRE90S, GBF_SPORTSMISC, 0,
-	NULL, tbowlaRomInfo, tbowlaRomName, NULL, NULL, TbowlInputInfo, TbowlDIPInfo,
+	NULL, tbowlaRomInfo, tbowlaRomName, NULL, NULL, NULL, NULL, TbowlInputInfo, TbowlDIPInfo,
 	DrvInit, DrvExit, DrvFrame, DrvDraw, DrvScan, &DrvRecalc, 0x800,
 	512, 224, 8, 3
 };
@@ -929,7 +943,7 @@ struct BurnDriver BurnDrvTbowlp = {
 	"Tecmo Bowl (World, prototype?)\0", NULL, "Tecmo", "hardware",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_MISC_PRE90S, GBF_SPORTSMISC, 0,
-	NULL, tbowlpRomInfo, tbowlpRomName, NULL, NULL, TbowlInputInfo, TbowlDIPInfo,
+	NULL, tbowlpRomInfo, tbowlpRomName, NULL, NULL, NULL, NULL, TbowlInputInfo, TbowlDIPInfo,
 	DrvInit, DrvExit, DrvFrame, DrvDraw, DrvScan, &DrvRecalc, 0x800,
 	512, 224, 8, 3
 };
@@ -979,7 +993,7 @@ struct BurnDriver BurnDrvTbowlj = {
 	"Tecmo Bowl (Japan)\0", NULL, "Tecmo", "hardware",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_MISC_PRE90S, GBF_SPORTSMISC, 0,
-	NULL, tbowljRomInfo, tbowljRomName, NULL, NULL, TbowlInputInfo, TbowlDIPInfo,
+	NULL, tbowljRomInfo, tbowljRomName, NULL, NULL, NULL, NULL, TbowlInputInfo, TbowlDIPInfo,
 	DrvInit, DrvExit, DrvFrame, DrvDraw, DrvScan, &DrvRecalc, 0x800,
 	512, 224, 8, 3
 };

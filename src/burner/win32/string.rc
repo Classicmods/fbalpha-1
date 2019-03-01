@@ -128,6 +128,7 @@ BEGIN
 	IDS_SPATH_PCBS				"PCBs"
 	IDS_SPATH_HISTORY			"History.dat"
 	IDS_SPATH_EEPROM			"EEPROM Saves"
+	IDS_SPATH_HDD				"HDD Images"
 	
 	IDS_ROMPATH_1				"Path #1"
 	IDS_ROMPATH_2				"Path #2"
@@ -204,6 +205,7 @@ BEGIN
 	IDS_SEL_GG					"Game Gear"
 	IDS_SEL_MSX					"MSX"
 	IDS_SEL_SPECTRUM			"ZX Spectrum"
+	IDS_SEL_MIDWAY				"Midway"
 	
 	IDS_FAVORITES					"Favorites"
 	IDS_GENRE					"Genre"
@@ -297,6 +299,7 @@ BEGIN
 	IDS_GAMEINFO_ROMINFO		"Rom Info"
 	IDS_GAMEINFO_HISTORY		"History"
 	IDS_GAMEINFO_SAMPLES		"Sample Info"
+	IDS_GAMEINFO_HDD			"HDD Info"
 	
 	IDS_PLACEHOLDER_LOAD		"Select Skin"
 	
@@ -342,6 +345,7 @@ BEGIN
 	IDS_ERR_LOAD_DISK			"Error reading %.32hs from %.512s"
 	IDS_ERR_LOAD_DISK_CRC		"CRC mismatch reading %.32hs from %.512s"
 	IDS_ERR_LOAD_REQUEST		"Error loading %.32hs, requested by %.128s.\nThe emulation will likely suffer problems."
+	IDS_ERR_LOAD_NOHDDDATA		"No HDD data was found, the game will not run!"
 
 	IDS_ERR_BURN_INIT			"There was a problem starting '%.128s'.\n"
 

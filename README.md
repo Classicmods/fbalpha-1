@@ -48,11 +48,6 @@ For those who don't want to fully customize their mapping, there are 2 convenien
 ### Where can i find the XXX roms ?
 We don't provide links for roms. Google is your friend.
 
-### I can't launch Killer Instinct, Rampage, Mortal Kombat 3 and other MIDWAY games, why ?
-Support for those games was removed from the libretro port.
-They are buggy in FB Alpha and have serious compatibility issues with this port. 
-Let's hope someone will fix them in a future release of FB Alpha.
-
 ### Game XXX is not launching, why ?
 It is either not supported or you have a bad rom. Build a valid romset with clrmamepro as said above.
 There is also a few games marked as not working, try one of their clones.
@@ -64,6 +59,7 @@ If the problem persist, write a report with a screenshot and the name of the pla
 ### Game XXX runs slowly, why ?
 Your hardware is probably too slow to run the game with normal settings. Try the following :
 * Check if there is a speedhack dipswitch in the core options, set it to "yes".
+* Try setting a value for frameskip in core options.
 * Try disabling rewind, runahead, and anything related to the savestates system in retroarch.
 * Try lowering audio settings in the core options.
 If it is not enough, upgrade or overclock your hardware.
@@ -77,10 +73,10 @@ Overall, FB Alpha is slower than old MAME version but more accurate and less bug
 This libretro port also support various features which are usually buggy or absent in MAME cores (netplay, rewind, retroachievements, ...). It takes some resources.
 
 ### Cheat code doesn't work, why ?
-This is not implemented yet.
+There should be partial support through the new API relying on main ram exposition.
 
 ### Neogeo CD doesn't work, why ?
 The support is still a work in progress, there are several things to know :
 * You need a copy of neocdz.zip and neogeo.zip in your libretro system directory
 * You need to add `--subsystem neocd` to the command line
-* you can only load `MODE1/2048` tracks at the moment
+* Supported format are ccd/sub/img iso (trurip), and single file MODE1/2352 bin/cue (use utilities like "CDmage" to convert your iso if needed)

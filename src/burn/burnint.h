@@ -63,6 +63,8 @@ struct BurnDriver {
 	INT32 (*GetZipName)(char** pszName, UINT32 i);				// Function to get possible zip names
 	INT32 (*GetRomInfo)(struct BurnRomInfo* pri, UINT32 i);		// Function to get the length and crc of each rom
 	INT32 (*GetRomName)(char** pszName, UINT32 i, INT32 nAka);	// Function to get the possible names for each rom
+	INT32 (*GetHDDInfo)(struct BurnHDDInfo* pri, UINT32 i);			// Function to get hdd info
+	INT32 (*GetHDDName)(char** pszName, UINT32 i, INT32 nAka);		// Function to get the possible names for each hdd
 	INT32 (*GetSampleInfo)(struct BurnSampleInfo* pri, UINT32 i);		// Function to get the sample flags
 	INT32 (*GetSampleName)(char** pszName, UINT32 i, INT32 nAka);	// Function to get the possible names for each sample
 	INT32 (*GetInputInfo)(struct BurnInputInfo* pii, UINT32 i);	// Function to get the input info for the game
@@ -155,7 +157,7 @@ void CpuCheatRegister(INT32 type, cpu_core_config *config);
 void BurnInitMemoryManager();
 UINT8 *BurnMalloc(INT32 size);
 void _BurnFree(void *ptr);
-#define BurnFree(x)		_BurnFree(x); x = NULL;
+#define BurnFree(x) do {_BurnFree(x); x = NULL; } while (0)
 void BurnExitMemoryManager();
 
 // ---------------------------------------------------------------------------
@@ -201,6 +203,7 @@ extern UINT8 DebugSnd_YM2612Initted;
 extern UINT8 DebugSnd_YM3526Initted;
 extern UINT8 DebugSnd_YM3812Initted;
 extern UINT8 DebugSnd_YMF278BInitted;
+extern UINT8 DebugSnd_YMF262Initted;
 extern UINT8 DebugSnd_C6280Initted;
 extern UINT8 DebugSnd_DACInitted;
 extern UINT8 DebugSnd_ES5506Initted;

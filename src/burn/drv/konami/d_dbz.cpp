@@ -24,7 +24,7 @@ static UINT8 *DrvGfxROM3;
 static UINT8 *DrvGfxROMExp3;
 static UINT8 *DrvSndROM;
 static UINT8 *Drv68KRAM0;
-static UINT8 *Drv68KRAM1;
+static UINT8 *DrvObjDMARam;
 static UINT8 *DrvPalRAM;
 static UINT8 *DrvBg2RAM;
 static UINT8 *DrvBg1RAM;
@@ -47,51 +47,46 @@ static UINT8 DrvJoy1[16];
 static UINT8 DrvJoy2[16];
 static UINT8 DrvReset;
 static UINT16 DrvInputs[3];
-static UINT8 DrvDips[3];
+static UINT8 DrvDips[2];
 
 static UINT16 control_data;
 
 static struct BurnInputInfo DbzInputList[] = {
 	{"P1 Coin",		BIT_DIGITAL,	DrvJoy2 + 5,	"p1 coin"	},
-	{"P1 Start",		BIT_DIGITAL,	DrvJoy2 + 1,	"p1 start"	},
+	{"P1 Start",	BIT_DIGITAL,	DrvJoy2 + 1,	"p1 start"	},
 	{"P1 Up",		BIT_DIGITAL,	DrvJoy1 + 4,	"p1 up"		},
 	{"P1 Down",		BIT_DIGITAL,	DrvJoy1 + 3,	"p1 down"	},
 	{"P1 Left",		BIT_DIGITAL,	DrvJoy1 + 6,	"p1 left"	},
-	{"P1 Right",		BIT_DIGITAL,	DrvJoy1 + 5,	"p1 right"	},
-	{"P1 Button 1",		BIT_DIGITAL,	DrvJoy1 + 2,	"p1 fire 1"	},
-	{"P1 Button 2",		BIT_DIGITAL,	DrvJoy1 + 1,	"p1 fire 2"	},
-	{"P1 Button 3",		BIT_DIGITAL,	DrvJoy1 + 0,	"p1 fire 3"	},
-	{"P1 Button 4",		BIT_DIGITAL,	DrvJoy2 + 7,	"p1 fire 4"	},
+	{"P1 Right",	BIT_DIGITAL,	DrvJoy1 + 5,	"p1 right"	},
+	{"P1 Button 1",	BIT_DIGITAL,	DrvJoy1 + 2,	"p1 fire 1"	},
+	{"P1 Button 2",	BIT_DIGITAL,	DrvJoy1 + 1,	"p1 fire 2"	},
+	{"P1 Button 3",	BIT_DIGITAL,	DrvJoy1 + 0,	"p1 fire 3"	},
+	{"P1 Button 4",	BIT_DIGITAL,	DrvJoy2 + 7,	"p1 fire 4"	},
 
 	{"P2 Coin",		BIT_DIGITAL,	DrvJoy2 + 4,	"p2 coin"	},
-	{"P2 Start",		BIT_DIGITAL,	DrvJoy2 + 0,	"p2 start"	},
+	{"P2 Start",	BIT_DIGITAL,	DrvJoy2 + 0,	"p2 start"	},
 	{"P2 Up",		BIT_DIGITAL,	DrvJoy1 + 12,	"p2 up"		},
 	{"P2 Down",		BIT_DIGITAL,	DrvJoy1 + 11,	"p2 down"	},
 	{"P2 Left",		BIT_DIGITAL,	DrvJoy1 + 14,	"p2 left"	},
-	{"P2 Right",		BIT_DIGITAL,	DrvJoy1 + 13,	"p2 right"	},
-	{"P2 Button 1",		BIT_DIGITAL,	DrvJoy1 + 10,	"p2 fire 1"	},
-	{"P2 Button 2",		BIT_DIGITAL,	DrvJoy1 + 9,	"p2 fire 2"	},
-	{"P2 Button 3",		BIT_DIGITAL,	DrvJoy1 + 8,	"p2 fire 3"	},
-	{"P2 Button 4",		BIT_DIGITAL,	DrvJoy2 + 6,	"p2 fire 4"	},
+	{"P2 Right",	BIT_DIGITAL,	DrvJoy1 + 13,	"p2 right"	},
+	{"P2 Button 1",	BIT_DIGITAL,	DrvJoy1 + 10,	"p2 fire 1"	},
+	{"P2 Button 2",	BIT_DIGITAL,	DrvJoy1 + 9,	"p2 fire 2"	},
+	{"P2 Button 3",	BIT_DIGITAL,	DrvJoy1 + 8,	"p2 fire 3"	},
+	{"P2 Button 4",	BIT_DIGITAL,	DrvJoy2 + 6,	"p2 fire 4"	},
 
-	{"Reset",		BIT_DIGITAL,	&DrvReset,	"reset"		},
+	{"Reset",		BIT_DIGITAL,	&DrvReset,	    "reset"		},
 	{"Service",		BIT_DIGITAL,	DrvJoy2 + 2,	"service"	},
+	{"Service Mode",BIT_DIGITAL,	DrvJoy2 + 3,	"diag"	    },
 	{"Dip A",		BIT_DIPSWITCH,	DrvDips + 0,	"dip"		},
 	{"Dip B",		BIT_DIPSWITCH,	DrvDips + 1,	"dip"		},
-	{"Dip C",		BIT_DIPSWITCH,	DrvDips + 2,	"dip"		},
 };
 
 STDINPUTINFO(Dbz)
 
 static struct BurnDIPInfo DbzDIPList[]=
 {
-	{0x16, 0xff, 0xff, 0x08, NULL			},
-	{0x17, 0xff, 0xff, 0x3f, NULL			},
+	{0x17, 0xff, 0xff, 0x3b, NULL			},
 	{0x18, 0xff, 0xff, 0xff, NULL			},
-
-	{0   , 0xfe, 0   ,    2, "Service Mode"		},
-	{0x16, 0x01, 0x08, 0x08, "Off"			},
-	{0x16, 0x01, 0x08, 0x00, "On"			},
 
 	{0   , 0xfe, 0   ,    4, "Difficulty"		},
 	{0x17, 0x01, 0x03, 0x01, "Easy"			},
@@ -99,17 +94,23 @@ static struct BurnDIPInfo DbzDIPList[]=
 	{0x17, 0x01, 0x03, 0x02, "Hard"			},
 	{0x17, 0x01, 0x03, 0x00, "Hardest"		},
 
+#if 0  // broken (offset issue flipped)
 	{0   , 0xfe, 0   ,    2, "Flip Screen"		},
 	{0x17, 0x01, 0x08, 0x08, "Off"			},
 	{0x17, 0x01, 0x08, 0x00, "On"			},
+#endif
 
 	{0   , 0xfe, 0   ,    2, "Service Mode"		},
 	{0x17, 0x01, 0x20, 0x20, "Off"			},
 	{0x17, 0x01, 0x20, 0x00, "On"			},
 
 	{0   , 0xfe, 0   ,    2, "Language"		},
-	{0x17, 0x01, 0x40, 0x00, "English"		},
-	{0x17, 0x01, 0x40, 0x40, "Japanese"		},
+	{0x17, 0x01, 0x04, 0x00, "English"		},
+	{0x17, 0x01, 0x04, 0x04, "Japanese"		},
+
+	{0   , 0xfe, 0   ,    2, "Demo Sounds"		},
+	{0x17, 0x01, 0x10, 0x00, "Off"		},
+	{0x17, 0x01, 0x10, 0x10, "On"		},
 
 	{0   , 0xfe, 0   ,    2, "Mask ROM Test"	},
 	{0x17, 0x01, 0x80, 0x00, "Off"			},
@@ -156,13 +157,8 @@ STDDIPINFO(Dbz)
 
 static struct BurnDIPInfo Dbz2DIPList[]=
 {
-	{0x16, 0xff, 0xff, 0x08, NULL			},
 	{0x17, 0xff, 0xff, 0x3f, NULL			},
 	{0x18, 0xff, 0xff, 0xff, NULL			},
-
-	{0   , 0xfe, 0   ,    2, "Service Mode"		},
-	{0x16, 0x01, 0x08, 0x08, "Off"			},
-	{0x16, 0x01, 0x08, 0x00, "On"			},
 
 	{0   , 0xfe, 0   ,    4, "Difficulty"		},
 	{0x17, 0x01, 0x03, 0x01, "Easy"			},
@@ -170,13 +166,15 @@ static struct BurnDIPInfo Dbz2DIPList[]=
 	{0x17, 0x01, 0x03, 0x02, "Hard"			},
 	{0x17, 0x01, 0x03, 0x00, "Hardest"		},
 
+#if 0
 	{0   , 0xfe, 0   ,    2, "Flip Screen"		},
 	{0x17, 0x01, 0x04, 0x04, "Off"			},
 	{0x17, 0x01, 0x04, 0x00, "On"			},
+#endif
 
 	{0   , 0xfe, 0   ,    2, "Demo Sounds"		},
-	{0x17, 0x01, 0x08, 0x08, "Off"			},
-	{0x17, 0x01, 0x08, 0x00, "On"			},
+	{0x17, 0x01, 0x08, 0x00, "Off"			},
+	{0x17, 0x01, 0x08, 0x08, "On"			},
 
 	{0   , 0xfe, 0   ,    2, "Level Select"		},
 	{0x17, 0x01, 0x10, 0x10, "Off"			},
@@ -233,6 +231,38 @@ static struct BurnDIPInfo Dbz2DIPList[]=
 
 STDDIPINFO(Dbz2)
 
+static void dbz_objdma() // modified from moo mesa
+{
+	UINT16 *dst = (UINT16*)K053247Ram;   // 0x800 words
+	UINT16 *src = (UINT16*)DrvObjDMARam; // 0x2000 words
+
+	INT32 dmacntr, num_inactive;
+
+	num_inactive = dmacntr = 0x100;
+
+	do
+	{
+		if (*src & 0x8000)
+		{
+			memcpy(dst, src, 0x10);
+			dst += 0x10/2;
+			num_inactive--;
+		}
+		src += 0x40/2;
+	}
+	while (--dmacntr); // traverse 0x2000 words src, max (0x100 * 0x40/2)
+
+	if (num_inactive)
+	{
+		do
+		{
+			*dst = 0;
+			dst += 0x10/2;
+		}
+		while (--num_inactive);
+	}
+}
+
 static void __fastcall dbz_main_write_word(UINT32 address, UINT16 data)
 {
 	if ((address & 0xffc000) == 0x490000) {
@@ -249,7 +279,7 @@ static void __fastcall dbz_main_write_word(UINT32 address, UINT16 data)
 	if ((address & 0xfffff8) == 0x4c8000) {
 		return;	// regsb
 	}
-		
+
 	if ((address & 0xffffc0) == 0x4cc000) {
 		K056832WordWrite(address & 0x3e, data);
 		return;
@@ -421,11 +451,8 @@ static void __fastcall dbz_sound_write(UINT16 address, UINT8 data)
 	switch (address)
 	{
 		case 0xc000:
-			BurnYM2151SelectRegister(data);
-		return;
-
 		case 0xc001:
-			BurnYM2151WriteRegister(data);
+			BurnYM2151Write(address & 1, data);
 		return;
 
 		case 0xd000:
@@ -509,7 +536,7 @@ static INT32 DrvDoReset()
 
 	KonamiICReset();
 
-	MSM6295Reset(0);
+	MSM6295Reset();
 	BurnYM2151Reset();
 
 	control_data = 0;
@@ -525,38 +552,38 @@ static INT32 MemIndex()
 	DrvZ80ROM		= Next; Next += 0x010000;
 
 	DrvGfxROM0		= Next; Next += 0x400000;
-	DrvGfxROMExp0		= Next; Next += 0x800000;
+	DrvGfxROMExp0	= Next; Next += 0x800000;
 	DrvGfxROM1		= Next; Next += 0x800000;
-	DrvGfxROMExp1		= Next; Next += 0x1000000;
+	DrvGfxROMExp1	= Next; Next += 0x1000000;
 	DrvGfxROM2		= Next; Next += 0x400000;
-	DrvGfxROMExp2		= Next; Next += 0x800000;
+	DrvGfxROMExp2	= Next; Next += 0x800000;
 	DrvGfxROM3		= Next; Next += 0x400000;
-	DrvGfxROMExp3		= Next; Next += 0x800000;
+	DrvGfxROMExp3	= Next; Next += 0x800000;
 
 	MSM6295ROM		= Next;
 	DrvSndROM		= Next; Next += 0x040000;
 
-	konami_palette32	= (UINT32*)Next;
+	konami_palette32= (UINT32*)Next;
 	DrvPalette		= (UINT32*)Next; Next += 0x2000 * sizeof(UINT32);
 
 	AllRam			= Next;
 
 	Drv68KRAM0		= Next; Next += 0x010000;
-	Drv68KRAM1		= Next; Next += 0x004000;
+	DrvObjDMARam	= Next; Next += 0x004000; // dma area, 0x2000 words
 	DrvPalRAM		= Next; Next += 0x004000;
 
-	DrvBg2RAM		= Next; Next += 0x002000;
-	DrvBg1RAM		= Next; Next += 0x002000;
+	DrvBg2RAM		= Next; Next += 0x004000;
+	DrvBg1RAM		= Next; Next += 0x004000;
 
-	DrvK053936Ctrl1		= Next; Next += 0x000400;
-	DrvK053936Ctrl2		= Next; Next += 0x000400;
+	DrvK053936Ctrl1	= Next; Next += 0x000400;
+	DrvK053936Ctrl2	= Next; Next += 0x000400;
 
-	Drvk053936RAM1		= Next; Next += 0x004000;
-	Drvk053936RAM2		= Next; Next += 0x004000;
+	Drvk053936RAM1	= Next; Next += 0x004000;
+	Drvk053936RAM2	= Next; Next += 0x004000;
 
 	DrvZ80RAM		= Next; Next += 0x004000;
 
-	soundlatch		= Next; Next += 0x000001;
+	soundlatch		= Next; Next += 0x000001 + 0x03; // round up to 4byte
 
 	RamEnd			= Next;
 	MemEnd			= Next;
@@ -721,7 +748,7 @@ static INT32 DrvInit(INT32 nGame)
 
 	K056832Init(DrvGfxROM0, DrvGfxROMExp0, 0x400000, dbz_tile_callback);
 	K056832SetGlobalOffsets(0, 0);
-	K056832SetLayerOffsets(0, (nGame == 2) ? -34 : -35, -16);
+	K056832SetLayerOffsets(0, (nGame == 2) ? -35 : -34, -16);
 	K056832SetLayerOffsets(1, -31, -16);
 	K056832SetLayerOffsets(2,   0,   0);
 	K056832SetLayerOffsets(3, -31, -16);
@@ -733,8 +760,7 @@ static INT32 DrvInit(INT32 nGame)
 	SekOpen(0);
 	SekMapMemory(Drv68KROM,		0x000000, 0x0fffff, MAP_ROM);
 	SekMapMemory(Drv68KRAM0,	0x480000, 0x48ffff, MAP_RAM);
-	SekMapMemory(K053247Ram,	0x4a0000, 0x4a0fff, MAP_RAM);
-	SekMapMemory(Drv68KRAM1,	0x4a1000, 0x4a3fff, MAP_RAM);
+	SekMapMemory(DrvObjDMARam,	0x4a0000, 0x4a3fff, MAP_RAM);
 	SekMapMemory(DrvPalRAM,		0x4a8000, 0x4abfff, MAP_RAM);
 	SekMapMemory(DrvK053936Ctrl1,	0x4d0000, 0x4d03ff, MAP_RAM);
 	SekMapMemory(DrvK053936Ctrl2,	0x4d4000, 0x4d43ff, MAP_RAM);
@@ -791,7 +817,7 @@ static INT32 DrvExit()
 	KonamiICExit();
 
 	BurnYM2151Exit();
-	MSM6295Exit(0);
+	MSM6295Exit();
 
 	SekExit();
 	ZetExit();
@@ -815,7 +841,7 @@ static void DrvPaletteRecalc()
 
 		r = (r << 3) | (r >> 2);
 		g = (g << 3) | (g >> 2);
-		b = (b << 3) | (b >> 2); 
+		b = (b << 3) | (b >> 2);
 
 		DrvPalette[i] = (r << 16) + (g << 8) + b;
 	}
@@ -824,6 +850,7 @@ static void DrvPaletteRecalc()
 static INT32 DrvDraw()
 {
 	static const INT32 K053251_CI[6] = { 3, 4, 4, 4, 2, 1 };
+
 	DrvPaletteRecalc();
 	KonamiClearBitmaps(0);
 
@@ -896,13 +923,13 @@ static INT32 DrvFrame()
 			DrvInputs[1] ^= (DrvJoy2[i] & 1) << i;
 		}
 
-		DrvInputs[1] = (DrvInputs[1] & ~0xff08) | (DrvDips[0] & 0x08) | (DrvDips[1] << 8);
-		DrvInputs[2] = (DrvDips[2] << 8) | (DrvDips[2] << 0);
+		DrvInputs[1] = (DrvInputs[1] & 0xff) | (DrvDips[0] << 8);
+		DrvInputs[2] = (DrvDips[1] << 8) | (DrvDips[1] << 0);
 	}
 
 	SekNewFrame();
 
-	INT32 nInterleave = nBurnSoundLen;
+	INT32 nInterleave = 256;
 	INT32 nSoundBufferPos = 0;
 	INT32 nCyclesTotal[2] = { 16000000 / 60, 4000000 / 60 };
 	INT32 nCyclesDone[2] = { 0, 0 };
@@ -915,27 +942,26 @@ static INT32 DrvFrame()
 
 		nNext = (i + 1) * nCyclesTotal[0] / nInterleave;
 		nCyclesSegment = nNext - nCyclesDone[0];
-		nCyclesSegment = SekRun(nCyclesSegment);
-		nCyclesDone[0] += nCyclesSegment;
+		nCyclesDone[0] += SekRun(nCyclesSegment);
 
-		if (i == 0 && K053246_is_IRQ_enabled()) {
+		if (i == ((nInterleave/2)-1) && K053246_is_IRQ_enabled()) {
+			dbz_objdma();
 			SekSetIRQLine(4, CPU_IRQSTATUS_AUTO);
 		}
 
-		if (i == (nInterleave - 20)) {
-			SekSetIRQLine(2, CPU_IRQSTATUS_AUTO); //CK);
+		if (i == (nInterleave - 1)) {
+			SekSetIRQLine(2, CPU_IRQSTATUS_AUTO);
 		}
 
 		nNext = (i + 1) * nCyclesTotal[1] / nInterleave;
 		nCyclesSegment = nNext - nCyclesDone[1];
-		nCyclesSegment = ZetRun(nCyclesSegment);
-		nCyclesDone[1] += nCyclesSegment;
+		nCyclesDone[1] += ZetRun(nCyclesSegment);
 
-		if (pBurnSoundOut) {
-			INT32 nSegmentLength = nBurnSoundLen / nInterleave;
+		if (pBurnSoundOut && i&1) {
+			INT32 nSegmentLength = nBurnSoundLen / (nInterleave / 2);
 			INT16* pSoundBuf = pBurnSoundOut + (nSoundBufferPos << 1);
 			BurnYM2151Render(pSoundBuf, nSegmentLength);
-			MSM6295Render(0, pSoundBuf, nSegmentLength);
+			MSM6295Render(pSoundBuf, nSegmentLength);
 			nSoundBufferPos += nSegmentLength;
 		}
 
@@ -946,7 +972,7 @@ static INT32 DrvFrame()
 		INT16* pSoundBuf = pBurnSoundOut + (nSoundBufferPos << 1);
 		if (nSegmentLength) {
 			BurnYM2151Render(pSoundBuf, nSegmentLength);
-			MSM6295Render(0, pSoundBuf, nSegmentLength);
+			MSM6295Render(pSoundBuf, nSegmentLength);
 		}
 	}
 
@@ -960,7 +986,7 @@ static INT32 DrvFrame()
 	return 0;
 }
 
-static INT32 DrvScan(INT32 nAction,INT32 *pnMin)
+static INT32 DrvScan(INT32 nAction, INT32 *pnMin)
 {
 	struct BurnArea ba;
 
@@ -968,7 +994,7 @@ static INT32 DrvScan(INT32 nAction,INT32 *pnMin)
 		*pnMin = 0x029732;
 	}
 
-	if (nAction & ACB_VOLATILE) {		
+	if (nAction & ACB_VOLATILE) {
 		memset(&ba, 0, sizeof(ba));
 
 		ba.Data	  = AllRam;
@@ -1022,7 +1048,7 @@ struct BurnDriver BurnDrvDbz = {
 	"Dragonball Z (rev B)\0", NULL, "Banpresto", "Miscellaneous",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING, 2, HARDWARE_PREFIX_KONAMI, GBF_VSFIGHT, 0,
-	NULL, dbzRomInfo, dbzRomName, NULL, NULL, DbzInputInfo, DbzDIPInfo,
+	NULL, dbzRomInfo, dbzRomName, NULL, NULL, NULL, NULL, DbzInputInfo, DbzDIPInfo,
 	dbzInit, DrvExit, DrvFrame, DrvDraw, DrvScan, &DrvRecalc, 0x2000,
 	384, 256, 4, 3
 };
@@ -1058,7 +1084,7 @@ struct BurnDriver BurnDrvDbza = {
 	"Dragonball Z (rev A)\0", NULL, "Banpresto", "Miscellaneous",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_PREFIX_KONAMI, GBF_VSFIGHT, 0,
-	NULL, dbzaRomInfo, dbzaRomName, NULL, NULL, DbzInputInfo, DbzDIPInfo,
+	NULL, dbzaRomInfo, dbzaRomName, NULL, NULL, NULL, NULL, DbzInputInfo, DbzDIPInfo,
 	dbzaInit, DrvExit, DrvFrame, DrvDraw, DrvScan, &DrvRecalc, 0x2000,
 	384, 256, 4, 3
 };
@@ -1097,7 +1123,7 @@ struct BurnDriver BurnDrvDbz2 = {
 	"Dragonball Z 2 - Super Battle\0", NULL, "Banpresto", "Miscellaneous",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING, 2, HARDWARE_PREFIX_KONAMI, GBF_VSFIGHT, 0,
-	NULL, dbz2RomInfo, dbz2RomName, NULL, NULL, DbzInputInfo, Dbz2DIPInfo,
+	NULL, dbz2RomInfo, dbz2RomName, NULL, NULL, NULL, NULL, DbzInputInfo, Dbz2DIPInfo,
 	dbz2Init,DrvExit, DrvFrame, DrvDraw, DrvScan, &DrvRecalc, 0x2000,
 	384, 256, 4, 3
 };

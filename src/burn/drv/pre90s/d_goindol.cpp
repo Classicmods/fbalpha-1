@@ -649,7 +649,7 @@ struct BurnDriver BurnDrvGoindol = {
 	"Goindol (World)\0", NULL, "SunA", "Miscellaneous",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_ORIENTATION_VERTICAL | BDF_ORIENTATION_FLIPPED, 2, HARDWARE_MISC_PRE90S, GBF_BREAKOUT, 0,
-	NULL, goindolRomInfo, goindolRomName, NULL, NULL, GoindolInputInfo, GoindolDIPInfo,
+	NULL, goindolRomInfo, goindolRomName, NULL, NULL, NULL, NULL, GoindolInputInfo, GoindolDIPInfo,
 	GoindolInit, DrvExit, DrvFrame, DrvDraw, DrvScan, &DrvRecalc, 0x100,
 	224, 256, 3, 4
 };
@@ -685,15 +685,15 @@ struct BurnDriver BurnDrvGoindolu = {
 	"Goindol (US)\0", NULL, "SunA", "Miscellaneous",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_CLONE | BDF_ORIENTATION_VERTICAL | BDF_ORIENTATION_FLIPPED, 2, HARDWARE_MISC_PRE90S, GBF_BREAKOUT, 0,
-	NULL, goindoluRomInfo, goindoluRomName, NULL, NULL, GoindolInputInfo, GoindolDIPInfo,
+	NULL, goindoluRomInfo, goindoluRomName, NULL, NULL, NULL, NULL, GoindolInputInfo, GoindolDIPInfo,
 	GoindolInit, DrvExit, DrvFrame, DrvDraw, DrvScan, &DrvRecalc, 0x100,
 	224, 256, 3, 4
 };
 
 
-// Goindol (Korea)
+// Goindol (Japan)
 
-static struct BurnRomInfo goindolkRomDesc[] = {
+static struct BurnRomInfo goindoljRomDesc[] = {
 	{ "r1j",			0x8000, 0xdde33ad3, 1 | BRF_PRG | BRF_ESS }, //  0 Z80 #0 Code
 	{ "r2",				0x8000, 0x1ff6e3a2, 1 | BRF_PRG | BRF_ESS }, //  1
 	{ "r3",				0x8000, 0xe9eec24a, 1 | BRF_PRG | BRF_ESS }, //  2
@@ -713,15 +713,15 @@ static struct BurnRomInfo goindolkRomDesc[] = {
 	{ "am27s21.pr3",	0x0100, 0x8534cfb5, 5 | BRF_GRA },           // 12
 };
 
-STD_ROM_PICK(goindolk)
-STD_ROM_FN(goindolk)
+STD_ROM_PICK(goindolj)
+STD_ROM_FN(goindolj)
 
-struct BurnDriver BurnDrvGoindolk = {
-	"goindolk", "goindol", NULL, NULL, "1987",
-	"Goindol (Korea)\0", NULL, "SunA", "Miscellaneous",
+struct BurnDriver BurnDrvGoindolj = {
+	"goindolj", "goindol", NULL, NULL, "1987",
+	"Goindol (Japan)\0", NULL, "SunA", "Miscellaneous",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_CLONE | BDF_ORIENTATION_VERTICAL | BDF_ORIENTATION_FLIPPED, 2, HARDWARE_MISC_PRE90S, GBF_BREAKOUT, 0,
-	NULL, goindolkRomInfo, goindolkRomName, NULL, NULL, GoindolInputInfo, GoindolDIPInfo,
+	NULL, goindoljRomInfo, goindoljRomName, NULL, NULL, NULL, NULL, GoindolInputInfo, GoindolDIPInfo,
 	GoindolInit, DrvExit, DrvFrame, DrvDraw, DrvScan, &DrvRecalc, 0x100,
 	224, 256, 3, 4
 };
@@ -757,7 +757,7 @@ struct BurnDriver BurnDrvHomo = {
 	"Homo\0", NULL, "bootleg", "Miscellaneous",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_CLONE | BDF_BOOTLEG | BDF_ORIENTATION_VERTICAL | BDF_ORIENTATION_FLIPPED, 2, HARDWARE_MISC_PRE90S, GBF_BREAKOUT, 0,
-	NULL, homoRomInfo, homoRomName, NULL, NULL, GoindolInputInfo, GoindolDIPInfo,
+	NULL, homoRomInfo, homoRomName, NULL, NULL, NULL, NULL, GoindolInputInfo, GoindolDIPInfo,
 	DrvInit, DrvExit, DrvFrame, DrvDraw, DrvScan, &DrvRecalc, 0x100,
 	224, 256, 3, 4
 };

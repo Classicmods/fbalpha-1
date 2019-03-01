@@ -10,7 +10,10 @@
 #include "mips3_common.h"
 
 #include <string>
+
+#if MIPS3_ENABLE_BREAKPOINTS
 #include <unordered_set>
+#endif
 
 namespace mips
 {

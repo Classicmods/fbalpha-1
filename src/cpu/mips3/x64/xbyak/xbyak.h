@@ -167,7 +167,12 @@ public:
 	explicit Error(int err) : err_(err)
 	{
 		if (err_ < 0 || err_ > ERR_INTERNAL) {
+#ifdef __LIBRETRO__
+			// libretro file functions replacement lacks a stderr implementation
+			printf("bad err=%d in Xbyak::Error\n", err_);
+#else
 			fprintf(stderr, "bad err=%d in Xbyak::Error\n", err_);
+#endif
 			exit(1);
 		}
 	}
@@ -2081,7 +2086,12 @@ public:
 	{
 		if (x == 1) return;
 		if (x < 1 || (x & (x - 1))) throw Error(ERR_BAD_ALIGN);
+#ifdef __LIBRETRO__
+		// libretro file functions replacement lacks a stderr implementation
+		if (isAutoGrow() && x > (int)inner::ALIGN_PAGE_SIZE) printf("warning:autoGrow mode does not support %d align\n", x);
+#else
 		if (isAutoGrow() && x > (int)inner::ALIGN_PAGE_SIZE) fprintf(stderr, "warning:autoGrow mode does not support %d align\n", x);
+#endif
 		while (size_t(getCurr()) % x) {
 			nop();
 		}

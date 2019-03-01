@@ -5,11 +5,11 @@
 #ifndef TMS34010_H
 #define TMS34010_H
 
-#include <cstdint>
+#include "stdint.h"
 #include <string>
-#include <list>
-#include <fstream>
-#include <array>
+//#include <list>
+//#include <fstream>
+//#include <array>
 #include <cmath>
 
 
@@ -32,7 +32,7 @@ const int fw_lut[32] = {
     32,  1,  2,  3,  4,  5,  6,  7,  8,  9,
     10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
     20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
-    30, 31,
+    30, 31
 };
 
 enum STATUS_FLAGS
@@ -49,7 +49,7 @@ enum STATUS_FLAGS
     ST_V         = 0x10000000,
     ST_Z         = 0x20000000,
     ST_C         = 0x40000000,
-    ST_N         = 0x80000000,
+    ST_N         = 0x80000000
 };
 
 enum IO_REGISTERS
@@ -81,7 +81,7 @@ enum IO_REGISTERS
     IO_HTOTAL   = 0x0C0000030,
     IO_HSBLNK   = 0x0C0000020,
     IO_HEBLNK   = 0x0C0000010,
-    IO_HESYNC   = 0x0C0000000,
+    IO_HESYNC   = 0x0C0000000
 };
 
 enum {
@@ -112,7 +112,7 @@ enum {
     HTOTAL   = 0x03,
     HSBLNK   = 0x02,
     HEBLNK   = 0x01,
-    HESYNC   = 0x00,
+    HESYNC   = 0x00
 };
 
 enum {
@@ -120,7 +120,7 @@ enum {
     INTERRUPT_EXTERN_2 = (1 << 2),
     INTERRUPT_HOST     = (1 << 9),
     INTERRUPT_DISPLAY  = (1 << 10),
-    INTERRUPT_WINDOW   = (1 << 11),
+    INTERRUPT_WINDOW   = (1 << 11)
 };
 
 
@@ -129,7 +129,7 @@ extern const char *io_regs_names[32];
 
 enum TRAP_VECTORS
 {
-    VECT_RESET = 0xFFFFFFE0,
+    VECT_RESET = 0xFFFFFFE0
 };
 
 enum {
@@ -154,7 +154,7 @@ enum B_FILE_REGISTERS
     _INC1,
     _INC2,
     _PATTRN,
-    _TEMP,
+    _TEMP
 };
 
 static const char *const gfx_reg_names[15] = {
@@ -165,36 +165,44 @@ static const char *const gfx_reg_names[15] = {
 #ifdef TMS34010_DEBUGGER
 typedef enum {
     ICOUNTER_EXPIRED = 0,
-    BREAKPOINT_FOUND,
+    BREAKPOINT_FOUND
 } stop_reason_t;
 #endif
 
 typedef union {
-    struct {
+   struct datavalue {
         sword x;
         sword y;
-    };
+    } datavalue;
     dword value;
 } cpu_register;
 
 struct cpu_state {
-    cpu_register *r[32];
     cpu_register a[15];
     cpu_register b[15];
     cpu_register sp;
     dword pc;
     dword last_pc;
     dword st;
-    sdword icounter;
-    dword convdp;
+	sdword stop;
+	sdword icounter;
+	sdword cycles_start;
+	i64 total_cycles;
+
+	i64 timer_cyc; // silly cycle timer
+	sdword timer_active;
+
+	dword convdp;
     dword convsp;
     byte pshift;
     word io_regs[32];
     word shiftreg[4096];
 
+	// unscanned vars
+    cpu_register *r[32];
     void (*shift_read_cycle)(dword address, void*);
     void (*shift_write_cycle)(dword address, void*);
-
+	void (*timer_cb)();
 #ifdef TMS34010_DEBUGGER
     // debugger...
     stop_reason_t reason;
@@ -492,9 +500,19 @@ int generate_scanline(cpu_state *cpu, int line, scanline_render_t render);
 #ifdef TMS34010_DEBUGGER
 void run(cpu_state *cpu, int cycles, bool stepping=false);
 #else
-void run(cpu_state *cpu, int cycles);
+int run(cpu_state *cpu, int cycles);
 
 #endif
+
+void timer_arm(cpu_state *cpu, i64 cycle, void (*t_cb)());
+void stop(cpu_state *cpu);
+i64 total_cycles(cpu_state *cpu);
+void new_frame(cpu_state *cpu);
+void scan(cpu_state *cpu, sdword nAction);
+
+dword get_pc(cpu_state *cpu);
+dword get_ppc(cpu_state *cpu);
+
 void reset(cpu_state *cpu);
 void write_ioreg(cpu_state *cpu, dword addr, word value);
 dword read_ioreg(cpu_state *cpu, dword addr);

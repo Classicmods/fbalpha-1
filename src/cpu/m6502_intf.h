@@ -59,7 +59,7 @@ void M6502Exit();
 void M6502Open(INT32 num);
 void M6502Close();
 INT32 M6502GetActive();
-void M6502Idle(INT32 nCycles);
+INT32 M6502Idle(INT32 nCycles);
 void M6502ReleaseSlice();
 void M6502SetIRQLine(INT32 vector, INT32 status);
 INT32 M6502Run(INT32 cycles);
@@ -72,6 +72,8 @@ void M6502SetWriteHandler(void (*pHandler)(UINT16, UINT8));
 void M6502SetReadOpHandler(UINT8 (*pHandler)(UINT16));
 void M6502SetReadOpArgHandler(UINT8 (*pHandler)(UINT16));
 INT32 M6502Scan(INT32 nAction);
+
+void M6502SetOpcodeDecode(UINT8 *table);
 
 void M6502SetAddressMask(UINT16 RangeMask);
 

@@ -34,8 +34,6 @@ static UINT8 DrvDips[5] =   { 0, 0, 0, 0, 0 };
 static UINT8 DrvInputs[3] = { 0, 0, 0 };
 static UINT8 DrvReset;
 
-static UINT8 DrvDial[2] =   { 0, 0 };
-
 static INT16 DrvAnalogPort0 = 0;
 static INT16 DrvAnalogPort1 = 0;
 
@@ -393,7 +391,7 @@ static INT32 DrvInit()
 
 	earom_init();
 
-	BurnPaddleInit(2, false);
+	BurnTrackballInit(2);
 
 	DrvDoReset(1);
 
@@ -409,7 +407,7 @@ static INT32 DrvExit()
 
 	small_roms = 0;
 
-	BurnPaddleExit();
+	BurnTrackballExit();
 
 	earom_exit();
 
@@ -445,23 +443,21 @@ static void DrvPaletteInit()
 
 static INT32 DrvDraw()
 {
-	DrvPaletteInit();
+	if (DrvRecalc) {
+		DrvPaletteInit();
+		DrvRecalc = 0;
+	}
 
 	draw_vector(DrvPalette);
 
 	return 0;
 }
 
-static INT32 DIAL_INC[2] = { 0, 0 };
-
 static void update_dial()
 { // half of the dial value added at the beginning of the frame, half in the middle of the frame.
-	if (DrvJoy4f[0]) DrvDial[0] -= DIAL_INC[0] / 2;
-	if (DrvJoy4f[1]) DrvDial[0] += DIAL_INC[0] / 2;
-	if (DrvJoy4f[2]) DrvDial[1] -= DIAL_INC[1] / 2;
-	if (DrvJoy4f[3]) DrvDial[1] += DIAL_INC[1] / 2;
+	BurnTrackballUpdate(0);
 
-	DrvInputs[1] = (DrvDips[0] & 0x10) | (DrvDial[player] & 0x0f);
+	DrvInputs[1] = (DrvDips[0] & 0x10) | (BurnTrackballRead(0, player) & 0x0f);
 }
 
 static INT32 DrvFrame()
@@ -484,29 +480,12 @@ static INT32 DrvFrame()
 			DrvInputs[2] ^= (DrvJoy3[i] & 1) << i;
 		}
 
-		DIAL_INC[0] = 4; // default velocity
-		DIAL_INC[1] = 4;
-
-		BurnPaddleMakeInputs(0, DrvAnalogPort0, DrvAnalogPort1);
-
-		BurnDialINF dial = BurnPaddleReturnA(0);
-		if (dial.Backward) DrvJoy4f[0] = 1;
-		if (dial.Forward)  DrvJoy4f[1] = 1;
-		DIAL_INC[0] += ((dial.Velocity > 0xa) ? 0xa : dial.Velocity);
-
-		dial = BurnPaddleReturnB(0);
-		if (dial.Backward) DrvJoy4f[2] = 1;
-		if (dial.Forward)  DrvJoy4f[3] = 1;
-		DIAL_INC[1] += ((dial.Velocity > 0xa) ? 0xa : dial.Velocity);
-
+		BurnTrackballConfig(0, AXIS_NORMAL, AXIS_NORMAL);
+		BurnTrackballFrame(0, DrvAnalogPort0, DrvAnalogPort1, 0x04, 0x0a);
+		BurnTrackballUDLR(0, DrvJoy4f[2], DrvJoy4f[3], DrvJoy4f[0], DrvJoy4f[1]);
 		update_dial();
 
-		//bprintf(0, _T("0: gunx %X  DIAL_INC %X\n"), BurnGunX[0], DIAL_INC[0]);
-		//bprintf(0, _T("1: gunx %X  DIAL_INC %X\n"), BurnGunY[0], DIAL_INC[1]);
 		DrvInputs[0] = (DrvInputs[0] & 0x2f) | (DrvDips[4] & 0x10); // service mode
-
-		DrvInputs[1] = (DrvDips[0] & 0x10) | (DrvDial[player] & 0x0f);
-
 		DrvInputs[2] = (DrvInputs[2] & 0xf8) | (DrvDips[1] & 0x07);
 	}
 
@@ -573,7 +552,7 @@ static INT32 DrvScan(INT32 nAction, INT32 *pnMin)
 
 		pokey_scan(nAction, pnMin);
 
-		BurnPaddleScan();
+		BurnTrackballScan();
 
 		SCAN_VAR(nExtraCycles);
 	}
@@ -614,7 +593,7 @@ struct BurnDriver BurnDrvTempest = {
 	"Tempest (rev 3, Revised Hardware)\0", NULL, "Atari", "Miscellaneous",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_ORIENTATION_VERTICAL, 2, HARDWARE_MISC_PRE90S, GBF_SHOOT | GBF_ACTION | GBF_VECTOR, 0,
-	NULL, tempestRomInfo, tempestRomName, NULL, NULL, TempestInputInfo, TempestDIPInfo,
+	NULL, tempestRomInfo, tempestRomName, NULL, NULL, NULL, NULL, TempestInputInfo, TempestDIPInfo,
 	DrvInit, DrvExit, DrvFrame, DrvDraw, DrvScan, &DrvRecalc, 0x40 * 256,
 	500, 600, 3, 4
 };
@@ -650,7 +629,7 @@ struct BurnDriver BurnDrvTempest1r = {
 	"Tempest (rev 1, Revised Hardware)\0", NULL, "Atari", "Miscellaneous",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_CLONE | BDF_ORIENTATION_VERTICAL, 2, HARDWARE_MISC_PRE90S, GBF_SHOOT | GBF_ACTION | GBF_VECTOR, 0,
-	NULL, tempest1rRomInfo, tempest1rRomName, NULL, NULL, TempestInputInfo, TempestDIPInfo,
+	NULL, tempest1rRomInfo, tempest1rRomName, NULL, NULL, NULL, NULL, TempestInputInfo, TempestDIPInfo,
 	DrvInit, DrvExit, DrvFrame, DrvDraw, DrvScan, &DrvRecalc, 0x40 * 256,
 	500, 600, 3, 4
 };
@@ -698,7 +677,7 @@ struct BurnDriver BurnDrvTempest3 = {
 	"Tempest (rev 3)\0", NULL, "Atari", "Miscellaneous",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_CLONE | BDF_ORIENTATION_VERTICAL, 2, HARDWARE_MISC_PRE90S, GBF_SHOOT | GBF_ACTION | GBF_VECTOR, 0,
-	NULL, tempest3RomInfo, tempest3RomName, NULL, NULL, TempestInputInfo, TempestDIPInfo,
+	NULL, tempest3RomInfo, tempest3RomName, NULL, NULL, NULL, NULL, TempestInputInfo, TempestDIPInfo,
 	DrvInitSmall, DrvExit, DrvFrame, DrvDraw, DrvScan, &DrvRecalc, 0x40 * 256,
 	500, 600, 3, 4
 };
@@ -740,7 +719,7 @@ struct BurnDriver BurnDrvTempest2 = {
 	"Tempest (rev 2)\0", NULL, "Atari", "Miscellaneous",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_CLONE | BDF_ORIENTATION_VERTICAL, 2, HARDWARE_MISC_PRE90S, GBF_SHOOT | GBF_ACTION | GBF_VECTOR, 0,
-	NULL, tempest2RomInfo, tempest2RomName, NULL, NULL, TempestInputInfo, TempestDIPInfo,
+	NULL, tempest2RomInfo, tempest2RomName, NULL, NULL, NULL, NULL, TempestInputInfo, TempestDIPInfo,
 	DrvInitSmall, DrvExit, DrvFrame, DrvDraw, DrvScan, &DrvRecalc, 0x40 * 256,
 	500, 600, 3, 4
 };
@@ -782,7 +761,7 @@ struct BurnDriver BurnDrvTempest1 = {
 	"Tempest (rev 1)\0", NULL, "Atari", "Miscellaneous",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_CLONE | BDF_ORIENTATION_VERTICAL, 2, HARDWARE_MISC_PRE90S, GBF_SHOOT | GBF_ACTION | GBF_VECTOR, 0,
-	NULL, tempest1RomInfo, tempest1RomName, NULL, NULL, TempestInputInfo, TempestDIPInfo,
+	NULL, tempest1RomInfo, tempest1RomName, NULL, NULL, NULL, NULL, TempestInputInfo, TempestDIPInfo,
 	DrvInitSmall, DrvExit, DrvFrame, DrvDraw, DrvScan, &DrvRecalc, 0x40 * 256,
 	500, 600, 3, 4
 };
@@ -824,7 +803,7 @@ struct BurnDriver BurnDrvTemptube = {
 	"Tempest Tubes\0", NULL, "hack (Duncan Brown)", "Miscellaneous",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_CLONE | BDF_ORIENTATION_VERTICAL, 2, HARDWARE_MISC_PRE90S, GBF_SHOOT | GBF_ACTION | GBF_VECTOR, 0,
-	NULL, temptubeRomInfo, temptubeRomName, NULL, NULL, TempestInputInfo, TempestDIPInfo,
+	NULL, temptubeRomInfo, temptubeRomName, NULL, NULL, NULL, NULL, TempestInputInfo, TempestDIPInfo,
 	DrvInitSmall, DrvExit, DrvFrame, DrvDraw, DrvScan, &DrvRecalc, 0x40 * 256,
 	500, 600, 3, 4
 };

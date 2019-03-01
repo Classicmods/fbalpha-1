@@ -211,7 +211,7 @@ void TC0480SCPReset();
 INT32 TC0480SCPGetBgPriority();
 void TC0480SCPSetPriMap(UINT8 *PriMap);
 void TC0480SCPInit(INT32 nNumTiles, INT32 Pixels, INT32 xOffset, INT32 yOffset, INT32 xTextOffset, INT32 yTextOffset, INT32 VisYOffset);
-void TC0480SCPSetColourBase(INT32 Base);
+void TC0480SCPSetColourBase(INT32 Base); // color base must be shifted back 4.  f.ex 0x1000 -> 0x100
 void TC0480SCPExit();
 void TC0480SCPScan(INT32 nAction);
 
@@ -368,6 +368,26 @@ void TC0640FIOScan(INT32 nAction);
 			TC0100SCN_CHECK_CHAR_LAYER_NEED_UPDATE_WORD(0)				\
 		}																\
 		Ram[Offset] = BURN_ENDIAN_SWAP_INT16(d);						\
+		return;															\
+	}
+	
+#define TC0100SCN0LongWrite_Map(start, end)								\
+	if (a >= start && a <= end) {										\
+		UINT16 *Ram = (UINT16*)TC0100SCNRam[0];							\
+		INT32 Offset = (a - start) >> 1;								\
+		if (Ram[Offset] != BURN_ENDIAN_SWAP_INT16(d>>16)) {				\
+			TC0100SCN_CHECK_BG_LAYER_NEED_UPDATE_WORD(0)				\
+			TC0100SCN_CHECK_FG_LAYER_NEED_UPDATE_WORD(0)				\
+			TC0100SCN_CHECK_CHAR_LAYER_NEED_UPDATE_WORD(0)				\
+		}																\
+		Ram[Offset] = BURN_ENDIAN_SWAP_INT16(d>>16);					\
+        Offset |= 0x01;                                                 \
+        if (Ram[Offset] != BURN_ENDIAN_SWAP_INT16((d&0xffff))) {		    \
+			TC0100SCN_CHECK_BG_LAYER_NEED_UPDATE_WORD(0)				\
+			TC0100SCN_CHECK_FG_LAYER_NEED_UPDATE_WORD(0)				\
+			TC0100SCN_CHECK_CHAR_LAYER_NEED_UPDATE_WORD(0)				\
+		}																\
+		Ram[Offset] = BURN_ENDIAN_SWAP_INT16((d&0xffff));				    \
 		return;															\
 	}
 	

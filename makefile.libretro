@@ -1,7 +1,6 @@
 DEBUG = 0
 DEBUG_ASAN = 0
 DEBUG_UBSAN = 0
-FRONTEND_SUPPORTS_RGB565 = 1
 HAVE_GRIFFIN = 0
 # fastcall only works on x86_32
 FASTCALL = 0
@@ -10,12 +9,12 @@ FASTMATH = 1
 USE_SPEEDHACKS = 1
 EXTERNAL_ZLIB = 0
 INCLUDE_7Z_SUPPORT = 1
-PTR64 ?= 1
-INCLUDE_CPLUSPLUS11_FILES = 0
-BUILD_X64_EXE = 0
+# enable x86_64 dynarec, however it's not working properly atm
+USE_X64_DRC = 0
 AUTOGEN_DATS = 0
 HAVE_NEON = 0
 USE_EXPERIMENTAL_FLAGS = 0
+USE_CYCLONE = 0
 
 SPACE :=
 SPACE := $(SPACE) $(SPACE)
@@ -67,10 +66,6 @@ endif
 # TARGET
 TARGET_NAME := fbalpha
 
-ifeq ($(PTR64), 1)
-   FBA_DEFINES += -DPTR64
-endif
-
 # Unix
 ifneq (,$(findstring unix,$(platform)))
    TARGET := $(TARGET_NAME)_libretro.so
@@ -82,9 +77,11 @@ ifneq (,$(findstring unix,$(platform)))
    ifneq (,$(findstring rpi2,$(platform)))
       PLATFORM_DEFINES := -marm -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
       HAVE_NEON = 1
+      USE_CYCLONE = 1
    else ifneq (,$(findstring rpi3,$(platform)))
       PLATFORM_DEFINES := -marm -mcpu=cortex-a53 -mfpu=neon-fp-armv8 -mfloat-abi=hard
       HAVE_NEON = 1
+      USE_CYCLONE = 1
    endif
 
    # Solaris
@@ -100,6 +97,10 @@ ifneq (,$(findstring unix,$(platform)))
          CC = arm-linux-androideabi-gcc
          CXX = arm-linux-androideabi-g++
          PLATFORM_DEFINES += -DANDROID -Dlog2\(x\)=\(log\(x\)/1.4426950408889634\)
+      endif
+      USE_CYCLONE = 1
+      ifneq (,$(findstring neon,$(platform)))
+         HAVE_NEON = 1
       endif
    endif
 
@@ -130,6 +131,7 @@ else ifneq (,$(findstring ios,$(platform)))
    fpic := -fPIC
    SHARED := -dynamiclib
    HAVE_NEON = 1
+   #USE_CYCLONE = 1
    ifeq ($(IOSSDK),)
       IOSSDK := $(shell xcodebuild -version -sdk iphoneos Path)
    endif
@@ -166,6 +168,7 @@ else ifeq ($(platform), theos_ios)
    LIBRARY_NAME = $(TARGET_NAME)_libretro_ios
    ENDIANNESS_DEFINES := -DLSB_FIRST
    CFLAGS += -DIOS
+   USE_CYCLONE = 1
 
 # QNX
 else ifeq ($(platform), qnx)
@@ -178,6 +181,7 @@ else ifeq ($(platform), qnx)
    AR = qcc -Vgcc_ntoarmv7le
    PLATFORM_DEFINES := -D__BLACKBERRY_QNX__ -marm -mcpu=cortex-a9 -mfpu=neon -mfloat-abi=softfp
    HAVE_NEON = 1
+   USE_CYCLONE = 1
 
 # PS3
 else ifneq (,$(filter $(platform), ps3 sncps3 psl1ght))
@@ -221,6 +225,7 @@ else ifeq ($(platform), vita)
    CXXFLAGS += -mfloat-abi=hard -fsingle-precision-constant -fpermissive -fno-rtti -fno-exceptions
    EXTERNAL_ZLIB = 1
    STATIC_LINKING = 1
+   USE_CYCLONE = 1
 
 # Xbox 360
 else ifeq ($(platform), xenon)
@@ -240,6 +245,7 @@ else ifeq ($(platform), switch)
    ENDIANNESS_DEFINES := -DLSB_FIRST
    PLATFORM_DEFINES := -marm -mcpu=cortex-a53 -mfpu=neon-fp-armv8 -mfloat-abi=hard
    HAVE_NEON = 1
+   USE_CYCLONE = 1
 
 # Nintendo Switch (libnx)
 else ifeq ($(platform), libnx)
@@ -272,6 +278,7 @@ else ifeq ($(platform), classic_armv7_a7)
 	PLATFORM_FLAGS = -marm -mtune=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
 	A7A7_FLAGS = 1
 	HAVE_NEON = 1
+	USE_CYCLONE = 1
 	ARCH = arm
 	ENDIANNESS_DEFINES := -DLSB_FIRST
 	ifeq ($(shell echo `$(CC) -dumpversion` "< 4.9" | bc -l), 1)
@@ -323,7 +330,6 @@ else ifneq (,$(filter $(platform), ngc wii wiiu))
    PLATFORM_DEFINES := -U__INT32_TYPE__ -U __UINT32_TYPE__ -D__INT32_TYPE__=int -UPPC
    EXTERNAL_ZLIB = 1
    STATIC_LINKING = 1
-   PTR64 = 0
 
    # Nintendo WiiU
    ifneq (,$(findstring wiiu,$(platform)))
@@ -359,12 +365,12 @@ else ifneq (,$(findstring windows_msvc2017,$(platform)))
 	PlatformSuffix = $(subst windows_msvc2017_,,$(platform))
 	ifneq (,$(findstring desktop,$(PlatformSuffix)))
 		WinPartition = desktop
-		MSVC2017CompileFlags = -DWINAPI_FAMILY=WINAPI_FAMILY_DESKTOP_APP -FS -D_USE_MATH_DEFINES
+		MSVC2017CompileFlags = -DWINAPI_FAMILY=WINAPI_FAMILY_DESKTOP_APP -EHsc -FS
 		LDFLAGS += -MANIFEST -LTCG:incremental -NXCOMPAT -DYNAMICBASE -DEBUG -OPT:REF -INCREMENTAL:NO -SUBSYSTEM:WINDOWS -MANIFESTUAC:"level='asInvoker' uiAccess='false'" -OPT:ICF -ERRORREPORT:PROMPT -NOLOGO -TLBID:1
 		LIBS := kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib
 	else ifneq (,$(findstring uwp,$(PlatformSuffix)))
 		WinPartition = uwp
-		MSVC2017CompileFlags = -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WINDLL -D_UNICODE -DUNICODE -D__WRL_NO_DEFAULT_LIB__ -EHsc -FS -D_USE_MATH_DEFINES
+		MSVC2017CompileFlags = -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WINDLL -D_UNICODE -DUNICODE -D__WRL_NO_DEFAULT_LIB__ -EHsc -FS
 		LDFLAGS += -APPCONTAINER -NXCOMPAT -DYNAMICBASE -MANIFEST:NO -LTCG -OPT:REF -SUBSYSTEM:CONSOLE -MANIFESTUAC:NO -OPT:ICF -ERRORREPORT:PROMPT -NOLOGO -TLBID:1 -DEBUG:FULL -WINMD:NO
 		LIBS := WindowsApp.lib
 	endif
@@ -467,7 +473,9 @@ OBJS := $(FBA_COBJ) $(FBA_CXXOBJ) $(FBA_SOBJ)
 
 FBA_DEFINES += -D__LIBRETRO__ \
 	$(ENDIANNESS_DEFINES) \
-	$(PLATFORM_DEFINES)
+	$(PLATFORM_DEFINES) \
+	$(NEON_FLAGS) \
+	$(ARM_FLAGS)
 
 INCFLAGS := $(foreach dir,$(INCLUDE_DIRS),-I$(dir))
 
@@ -514,8 +522,8 @@ ifeq ($(DEBUG_UBSAN), 1)
 endif
 
 ifeq ($(DEBUG), 1)
-   CFLAGS += -O0 -g -DFBA_DEBUG
-   CXXFLAGS += -O0 -g -DFBA_DEBUG
+   CFLAGS += -O1 -g -DFBA_DEBUG
+   CXXFLAGS += -O1 -g -DFBA_DEBUG
 else
    ifeq (,$(findstring msvc,$(platform)))
       CFLAGS += -O3 -DNDEBUG
@@ -531,11 +539,10 @@ CXXFLAGS += $(fpic) $(FBA_DEFINES)
 LDFLAGS += $(fpic)
 
 ifeq (,$(findstring msvc,$(platform)))
-   CFLAGS += -fforce-addr $(INLINE_LIMIT)  \
+   CFLAGS += -funroll-loops -fforce-addr $(INLINE_LIMIT)  \
       -Wall -Wno-long-long -Wno-sign-compare -Wno-uninitialized -Wno-unused \
       -Wno-sequence-point -Wno-strict-aliasing
-   CXXFLAGS += -fforce-addr $(INLINE_LIMIT) \
-      -fcheck-new \
+   CXXFLAGS += -funroll-loops -fforce-addr $(INLINE_LIMIT) \
       -Wall -W -Wshadow -Wno-long-long -Wno-write-strings \
       -Wunknown-pragmas -Wundef -Wno-conversion -Wno-missing-braces -Wno-multichar \
       -Wuninitialized -Wpointer-arith -Wno-inline -Wno-unused-value \
@@ -545,11 +552,6 @@ ifeq (,$(findstring msvc,$(platform)))
       CFLAGS += -Wno-write-strings -Wno-pedantic
       CXXFLAGS += -Wno-write-strings -pedantic -Wno-address -Wno-unused-but-set-variable -Wno-narrowing -Wno-pedantic
    endif
-endif
-
-ifeq ($(FRONTEND_SUPPORTS_RGB565), 1)
-   CFLAGS += -DFRONTEND_SUPPORTS_RGB565
-   CXXFLAGS += -DFRONTEND_SUPPORTS_RGB565
 endif
 
 PERL = perl$(EXE_EXT)
@@ -650,6 +652,10 @@ endif
 
 %.o: %.c
 	$(CC) -c $(OBJOUT)$@ $< $(CFLAGS) $(INCFLAGS)
+
+# Disabling file_stream_transform for this file, it's messing up cdda playback
+src/burner/libretro/retro_cdemu.o: src/burner/libretro/retro_cdemu.cpp
+	$(CXX) -c $(OBJOUT)$@ $< $(CXXFLAGS) $(INCFLAGS) -DSKIP_STDIO_REDEFINES
 
 %.o: %.cpp
 	$(CXX) -c $(OBJOUT)$@ $< $(CXXFLAGS) $(INCFLAGS)

@@ -19,6 +19,11 @@ typedef tms::scanline_render_t pTMS34010ScanlineRender;
 
 void TMS34010Init();
 int TMS34010Run(int cycles);
+void TMS34010TimerCB(INT64 cycles, void (*timer_cb)());
+INT64 TMS34010TotalCycles();
+void TMS34010Scan(INT32 nAction);
+void TMS34010RunEnd();
+void TMS34010NewFrame();
 void TMS34010Reset();
 void TMS34010GenerateIRQ(UINT32 line);
 void TMS34010ClearIRQ(UINT32 line);
@@ -27,12 +32,14 @@ void TMS34010SetToShift(void (*SL)(UINT32 addr, void *dst));
 void TMS34010SetFromShift(void (*FS)(UINT32 addr, void *src));
 int TMS34010GenerateScanline(int line);
 TMS34010State *TMS34010GetState();
+UINT32 TMS34010GetPC();
+UINT32 TMS34010GetPPC();
 
 UINT16 TMS34010ReadWord(UINT32 address);
 void TMS34010WriteWord(UINT32 address, UINT16 value);
 void TMS34010MapReset();
 void TMS34010MapMemory(UINT8 *mem, UINT32 start, UINT32 end, UINT8 type);
-void TMS34010MapHandler(UINT32 num, UINT32 start, UINT32 end, UINT8 type);
+void TMS34010MapHandler(uintptr_t num, UINT32 start, UINT32 end, UINT8 type);
 int TMS34010SetReadHandler(UINT32 num, pTMS34010ReadHandler handler);
 int TMS34010SetWriteHandler(UINT32 num, pTMS34010WriteHandler handler);
 int TMS34010SetHandlers(UINT32 num, pTMS34010ReadHandler rhandler, pTMS34010WriteHandler whandler);

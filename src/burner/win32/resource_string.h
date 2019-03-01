@@ -128,6 +128,7 @@
 #define IDS_SPATH_PCBS					(IDS_STRING +  470)
 #define IDS_SPATH_HISTORY				(IDS_STRING +  472)
 #define IDS_SPATH_EEPROM				(IDS_STRING +  474)
+#define IDS_SPATH_HDD					(IDS_STRING +  476)
 
 #define IDS_ROMPATH_1					(IDS_STRING +  480)
 #define IDS_ROMPATH_2					(IDS_STRING +  482)
@@ -204,6 +205,7 @@
 #define IDS_SEL_GG						(IDS_STRING +  634)
 #define IDS_SEL_MSX						(IDS_STRING +  636)
 #define IDS_SEL_SPECTRUM				(IDS_STRING +  638)
+#define IDS_SEL_MIDWAY					(IDS_STRING +  640)
 
 #define IDS_GENRE						(IDS_STRING +  650)
 #define IDS_GENRE_HORSHOOT				(IDS_STRING +  652)
@@ -226,9 +228,9 @@
 #define IDS_GENRE_MAHJONG				(IDS_STRING +  686)
 #define IDS_GENRE_RACING				(IDS_STRING +  688)
 #define IDS_GENRE_SHOOT					(IDS_STRING +  690)
-#define IDS_GENRE_RUNGUN                (IDS_STRING +  691)
-#define IDS_GENRE_STRATEGY              (IDS_STRING +  692)
-#define IDS_GENRE_ACTION                (IDS_STRING +  693)
+#define IDS_GENRE_RUNGUN                (IDS_STRING +  692)
+#define IDS_GENRE_STRATEGY              (IDS_STRING +  694)
+#define IDS_GENRE_ACTION                (IDS_STRING +  696)
 
 #define IDS_FAMILY						(IDS_STRING +  740)
 #define IDS_FAMILY_MSLUG				(IDS_STRING +  742)
@@ -298,6 +300,7 @@
 #define IDS_GAMEINFO_ROMINFO			(IDS_STRING + 1028)
 #define IDS_GAMEINFO_HISTORY			(IDS_STRING + 1030)
 #define IDS_GAMEINFO_SAMPLES			(IDS_STRING + 1032)
+#define IDS_GAMEINFO_HDD				(IDS_STRING + 1034)
 
 #define IDS_PLACEHOLDER_LOAD			(IDS_STRING + 1200)
 
@@ -343,6 +346,7 @@
 #define IDS_ERR_LOAD_REQUEST			(IDS_ERROR  +   48)
 #define IDS_ERR_LOAD_DISK				(IDS_ERROR  +   50)
 #define IDS_ERR_LOAD_DISK_CRC			(IDS_ERROR  +   52)
+#define IDS_ERR_LOAD_NOHDDDATA			(IDS_ERROR  +   54)
 
 #define IDS_ERR_BURN_INIT				(IDS_ERROR  +   60)
 

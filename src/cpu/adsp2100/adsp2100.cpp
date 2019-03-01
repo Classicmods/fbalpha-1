@@ -267,20 +267,12 @@ INLINE adsp2100_state *get_safe_token(const device_config *device)
 		   cpu_get_type(device) == CPU_ADSP2181);
 	return (adsp2100_state *)device->token;   
 }
-#else
-#define get_safe_token(x)   nullptr
 #endif
 
 
 /***************************************************************************
     MEMORY ACCESSORS
 ***************************************************************************/
-// FBA stuff
-extern UINT16 adsp21xx_data_read_word_16le(UINT32 address);
-extern UINT32 adsp21xx_read_dword_32le(UINT32 address);
-extern void adsp21xx_data_write_word_16le(UINT32 address, UINT16 data);
-extern void adsp21xx_write_dword_32le(UINT32 address, UINT32 data);
-
 INLINE UINT16 RWORD_DATA(adsp2100_state *adsp, UINT32 addr)
 {
     //return memory_read_word_16le(adsp->data, addr << 1);
@@ -888,11 +880,36 @@ void adsp21xx_exit(adsp2100_state *adsp)
 
 }
 
-
+// States
+void adsp21xx_scan(adsp2100_state *adsp, INT32 nAction)
+{
+	if (nAction & ACB_DRIVER_DATA) {
+		struct BurnArea ba;
+		memset(&ba, 0, sizeof(ba));
+		ba.Data	  = adsp;
+		ba.nLen	  = STRUCT_SIZE_HELPER(adsp2100_state, irq_latch);
+		ba.szName = "Adsp21xx Regs";
+		BurnAcb(&ba);
+	}
+}
 
 /***************************************************************************
     CORE EXECUTION LOOP
 ***************************************************************************/
+void adsp21xx_stop_execute(adsp2100_state *adsp)
+{
+	adsp->end_run = 1;
+}
+
+int adsp21xx_total_cycles(adsp2100_state *adsp)
+{
+	return adsp->total_cycles + (adsp->cycles_start - adsp->icount);
+}
+
+void adsp21xx_new_frame(adsp2100_state *adsp)
+{
+	adsp->total_cycles = 0;
+}
 
 /* execute instructions on this CPU until icount expires */
 //static CPU_EXECUTE( adsp21xx )
@@ -900,6 +917,9 @@ int adsp21xx_execute(adsp2100_state *adsp, int cycles)
 {
 //	int check_debugger = ((device->machine->debug_flags & DEBUG_FLAG_ENABLED) != 0);
 //	adsp2100_state *adsp = get_safe_token(device);
+
+	adsp->end_run = 0;
+	adsp->cycles_start = cycles;
 
 	check_irqs(adsp);
 
@@ -1633,9 +1653,15 @@ int adsp21xx_execute(adsp2100_state *adsp, int cycles)
 		}
 
 		adsp->icount--;
-	} while (adsp->icount > 0);
+	} while (adsp->icount > 0 && !adsp->end_run);
 
-	return cycles - adsp->icount;
+	cycles = cycles - adsp->icount;
+
+	adsp->total_cycles += cycles;
+
+	adsp->cycles_start = adsp->icount = 0;
+
+	return cycles;
 }
 
 

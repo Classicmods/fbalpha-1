@@ -3,10 +3,13 @@
 
 // Generic Light Gun support for FBA
 // written by Barry Harris (Treble Winner) based on the code in Kev's opwolf driver
+// Trackball section by dink
 
 INT32 nBurnGunNumPlayers = 0;
 bool bBurnGunAutoHide = 1;
 static bool bBurnGunDrawTargets = true;
+
+static INT32 Using_Trackball = 0;
 
 static INT32 nBurnGunMaxX = 0;
 static INT32 nBurnGunMaxY = 0;
@@ -43,7 +46,7 @@ UINT8 BurnGunTargetData[18][18] = {
 #undef b
 #undef a
 
-#define GunTargetHideTime 60 * 4 /* 4 seconds @ 60 fps */
+#define GunTargetHideTime (60 * 4) /* 4 seconds @ 60 fps */
 static INT32 GunTargetTimer[MAX_GUNS]  = {0, 0, 0, 0};
 static INT32 GunTargetLastX[MAX_GUNS]  = {0, 0, 0, 0};
 static INT32 GunTargetLastY[MAX_GUNS]  = {0, 0, 0, 0};
@@ -62,6 +65,21 @@ static UINT8 GunTargetShouldDraw(INT32 player)
 	return ((INT32)nCurrentFrame < GunTargetTimer[player] + GunTargetHideTime);
 }
 #undef GunTargetHideTime
+
+INT32 BurnGunIsActive()
+{
+	return (Debug_BurnGunInitted && Using_Trackball == 0);
+}
+
+void BurnGunSetCoords(INT32 player, INT32 x, INT32 y)
+{
+	if (!Debug_BurnGunInitted) return; // callback for Libretro (fail nicely)
+
+	//BurnGunX[player] = (x * nBurnGunMaxX / 0xff) << 8; // based on 0 - 255
+	//BurnGunY[player] = (y * nBurnGunMaxY / 0xff) << 8;
+	BurnGunX[player] = (x - 8) << 8; // based on emulated resolution
+	BurnGunY[player] = (y - 8) << 8;
+}
 
 UINT8 BurnGunReturnX(INT32 num)
 {
@@ -104,7 +122,7 @@ BurnDialINF BurnPaddleReturnA(INT32 num)
 
 	if (num > MAX_GUNS - 1) return dial;
 
-	INT32 PaddleA = ((BurnGunX[num] >> 8) / 0x4) & 0xff;
+	INT32 PaddleA = ((BurnGunX[num] >> 8) / 0x4);
 
 	if (PaddleA < PaddleLastA[num]) {
 		dial.Velocity = (PaddleLastA[num] - PaddleA);
@@ -131,7 +149,7 @@ BurnDialINF BurnPaddleReturnB(INT32 num)
 
 	if (num > MAX_GUNS - 1) return dial;
 
-	INT32 PaddleB = ((BurnGunY[num] >> 8) / 0x4) & 0xff;
+	INT32 PaddleB = ((BurnGunY[num] >> 8) / 0x4);
 
 	if (PaddleB < PaddleLastB[num]) {
 		dial.Velocity = (PaddleLastB[num] - PaddleB);
@@ -146,6 +164,94 @@ BurnDialINF BurnPaddleReturnB(INT32 num)
 
 	return dial;
 }
+
+// Trackball Helpers
+static UINT16 TrackA[MAX_GUNS]; // trackball counters
+static UINT16 TrackB[MAX_GUNS];
+
+static INT32 DIAL_INC[MAX_GUNS * 2]; // velocity counter
+static UINT8 DrvJoyT[MAX_GUNS * 4];  // direction bytemask
+static UINT8 TrackRev[MAX_GUNS * 2]; // reversed counter logic?
+
+void BurnTrackballFrame(INT32 dev, INT16 PortA, INT16 PortB, INT32 VelocityStart, INT32 VelocityMax)
+{
+	memset(&DrvJoyT[dev*4], 0, 4);
+
+	DIAL_INC[(dev*2) + 0] = VelocityStart;
+	DIAL_INC[(dev*2) + 1] = VelocityStart;
+	BurnPaddleMakeInputs(dev, AnalogDeadZone(PortA), AnalogDeadZone(PortB));
+
+	BurnDialINF dial = BurnPaddleReturnA(dev);
+	if (dial.Backward) DrvJoyT[(dev*4) + 0] = 1;
+	if (dial.Forward)  DrvJoyT[(dev*4) + 1] = 1;
+	DIAL_INC[(dev*2) + 0] += ((dial.Velocity > VelocityMax) ? VelocityMax : dial.Velocity);
+
+	dial = BurnPaddleReturnB(dev);
+	if (dial.Backward) DrvJoyT[(dev*4) + 2] = 1;
+	if (dial.Forward)  DrvJoyT[(dev*4) + 3] = 1;
+	DIAL_INC[(dev*2) + 1] += ((dial.Velocity > VelocityMax) ? VelocityMax : dial.Velocity);
+}
+
+void BurnTrackballUpdate(INT32 dev)
+{
+	// PortA (usually X-Axis)
+	if (DrvJoyT[(dev*4) + 0]) { // Backward
+		if (TrackRev[(dev*2) + 0])
+			TrackA[dev] += DIAL_INC[(dev*2) + 0] / 2;
+		else
+			TrackA[dev] -= DIAL_INC[(dev*2) + 0] / 2;
+	}
+	if (DrvJoyT[(dev*4) + 1]) { // Forward
+		if (TrackRev[(dev*2) + 0])
+			TrackA[dev] -= DIAL_INC[(dev*2) + 0] / 2;
+		else
+			TrackA[dev] += DIAL_INC[(dev*2) + 0] / 2;
+	}
+	// PortB (usually Y-Axis)
+	if (DrvJoyT[(dev*4) + 2]) { // Backward
+		if (TrackRev[(dev*2) + 1])
+			TrackB[dev] += DIAL_INC[(dev*2) + 1] / 2;
+		else
+			TrackB[dev] -= DIAL_INC[(dev*2) + 1] / 2;
+	}
+	if (DrvJoyT[(dev*4) + 3]) { // Forward
+		if (TrackRev[(dev*2) + 1])
+			TrackB[dev] -= DIAL_INC[(dev*2) + 1] / 2;
+		else
+			TrackB[dev] += DIAL_INC[(dev*2) + 1] / 2;
+	}
+}
+
+UINT8 BurnTrackballRead(INT32 dev, INT32 isB)
+{
+	if (isB)
+		return TrackB[dev] & 0xff;
+	else
+		return TrackA[dev] & 0xff;
+}
+
+UINT16 BurnTrackballReadWord(INT32 dev, INT32 isB)
+{
+	if (isB)
+		return TrackB[dev] & 0xffff;
+	else
+		return TrackA[dev] & 0xffff;
+}
+
+void BurnTrackballUDLR(INT32 dev, INT32 u, INT32 d, INT32 l, INT32 r)
+{
+	DrvJoyT[(dev*4) + 0] |= l;
+	DrvJoyT[(dev*4) + 1] |= r;
+	DrvJoyT[(dev*4) + 2] |= u;
+	DrvJoyT[(dev*4) + 3] |= d;
+}
+
+void BurnTrackballConfig(INT32 dev, INT32 PortA_rev, INT32 PortB_rev)
+{
+	TrackRev[(dev*2) + 0] = PortA_rev;
+	TrackRev[(dev*2) + 1] = PortB_rev;
+}
+// end Trackball Helpers
 
 void BurnPaddleSetWrap(INT32 num, INT32 xmin, INT32 xmax, INT32 ymin, INT32 ymax)
 {
@@ -219,6 +325,12 @@ void BurnGunMakeInputs(INT32 num, INT16 x, INT16 y)
 		GunTargetUpdate(i);
 }
 
+void BurnTrackballInit(INT32 nNumPlayers)
+{
+	Using_Trackball = 1;
+	BurnGunInit(nNumPlayers, false);
+}
+
 void BurnGunInit(INT32 nNumPlayers, bool bDrawTargets)
 {
 	Debug_BurnGunInitted = 1;
@@ -239,6 +351,13 @@ void BurnGunInit(INT32 nNumPlayers, bool bDrawTargets)
 
 		BurnPaddleSetWrap(i, 0, 0xf0, 0, 0xf0); // Paddle/dial stuff
 	}
+
+	// Trackball stuff
+	memset(&TrackA, 0, sizeof(TrackA));
+	memset(&TrackB, 0, sizeof(TrackB));
+	memset(&DrvJoyT, 0, sizeof(DrvJoyT));
+	memset(&DIAL_INC, 0, sizeof(DIAL_INC));
+	memset(&TrackRev, 0, sizeof(TrackRev));
 }
 
 void BurnGunExit()
@@ -257,7 +376,8 @@ void BurnGunExit()
 		BurnGunX[i] = 0;
 		BurnGunY[i] = 0;
 	}
-	
+
+	Using_Trackball = 0;
 	Debug_BurnGunInitted = 0;
 }
 
@@ -269,6 +389,18 @@ void BurnGunScan()
 
 	SCAN_VAR(BurnGunX);
 	SCAN_VAR(BurnGunY);
+
+	if (Using_Trackball) {
+		SCAN_VAR(TrackA);
+		SCAN_VAR(TrackB);
+
+		SCAN_VAR(PaddleLastA);
+		SCAN_VAR(PaddleLastB);
+
+		SCAN_VAR(DIAL_INC);
+		SCAN_VAR(DrvJoyT);
+		SCAN_VAR(TrackRev);
+	}
 }
 
 void BurnGunDrawTarget(INT32 num, INT32 x, INT32 y)

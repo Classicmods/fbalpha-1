@@ -11,7 +11,6 @@
 #ifndef __ADSP2100_H__
 #define __ADSP2100_H__
 
-#include "cpuintrf.h"
 #include "adsp2100_defs.h"
 
 /***************************************************************************
@@ -44,6 +43,17 @@ void adsp21xx_reset(adsp2100_state *adsp);
 void adsp21xx_exit(adsp2100_state *adsp);
 int adsp21xx_execute(adsp2100_state *adsp, int cycles);
 void adsp21xx_set_irq_line(adsp2100_state *adsp, int irqline, int state);
+
+void adsp21xx_stop_execute(adsp2100_state *adsp);
+int adsp21xx_total_cycles(adsp2100_state *adsp);
+void adsp21xx_new_frame(adsp2100_state *adsp);
+void adsp21xx_scan(adsp2100_state *adsp, INT32 nAction);
+
+// direct memory r/w (functions in adsp2100_intf.cpp)
+UINT16 adsp21xx_data_read_word_16le(UINT32 address);
+UINT32 adsp21xx_read_dword_32le(UINT32 address);
+void adsp21xx_data_write_word_16le(UINT32 address, UINT16 data);
+void adsp21xx_write_dword_32le(UINT32 address, UINT32 data);
 
 /***************************************************************************
     PUBLIC FUNCTIONS

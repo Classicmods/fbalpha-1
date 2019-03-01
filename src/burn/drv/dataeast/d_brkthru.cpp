@@ -792,7 +792,7 @@ struct BurnDriver BurnDrvBrkthru = {
 	"Break Thru (US)\0", NULL, "Data East USA", "Miscellaneous",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING, 2, HARDWARE_PREFIX_DATAEAST, GBF_HORSHOOT, 0,
-	NULL, brkthruRomInfo, brkthruRomName, NULL, NULL, BrkthruInputInfo, BrkthruDIPInfo,
+	NULL, brkthruRomInfo, brkthruRomName, NULL, NULL, NULL, NULL, BrkthruInputInfo, BrkthruDIPInfo,
 	DrvInit, DrvExit, DrvFrame, DrvDraw, DrvScan, &DrvRecalc, 0x100,
 	240, 240, 4, 3
 };
@@ -830,7 +830,7 @@ struct BurnDriver BurnDrvBrkthruj = {
 	"Kyohkoh-Toppa (Japan)\0", NULL, "Data East Corporation", "Miscellaneous",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_PREFIX_DATAEAST, GBF_HORSHOOT, 0,
-	NULL, brkthrujRomInfo, brkthrujRomName, NULL, NULL, BrkthruInputInfo, BrkthrujDIPInfo,
+	NULL, brkthrujRomInfo, brkthrujRomName, NULL, NULL, NULL, NULL, BrkthruInputInfo, BrkthrujDIPInfo,
 	DrvInit, DrvExit, DrvFrame, DrvDraw, DrvScan, &DrvRecalc, 0x100,
 	240, 240, 4, 3
 };
@@ -868,7 +868,7 @@ struct BurnDriver BurnDrvForcebrk = {
 	"Force Break (bootleg)\0", NULL, "bootleg", "Miscellaneous",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_CLONE | BDF_BOOTLEG, 2, HARDWARE_PREFIX_DATAEAST, GBF_HORSHOOT, 0,
-	NULL, forcebrkRomInfo, forcebrkRomName, NULL, NULL, BrkthruInputInfo, BrkthruDIPInfo,
+	NULL, forcebrkRomInfo, forcebrkRomName, NULL, NULL, NULL, NULL, BrkthruInputInfo, BrkthruDIPInfo,
 	DrvInit, DrvExit, DrvFrame, DrvDraw, DrvScan, &DrvRecalc, 0x100,
 	240, 240, 4, 3
 };
@@ -896,6 +896,10 @@ static struct BurnRomInfo darwinRomDesc[] = {
 
 	{ "df.12",		0x0100, 0x89b952ef, 6 | BRF_GRA },           // 12 Color data
 	{ "df.13",		0x0100, 0xd595e91d, 6 | BRF_GRA },           // 13
+	
+	{ "1-pal16r4pc.bin",	0x104, 0xc859298c, BRF_OPT },
+	{ "2-pal16r4pc.bin",	0x104, 0x226629c3, BRF_OPT },
+	{ "3-pal16r4pc.bin", 	0x104, 0xb3e980a0, BRF_OPT },
 };
 
 STD_ROM_PICK(darwin)
@@ -912,7 +916,7 @@ struct BurnDriver BurnDrvDarwin = {
 	"Darwin 4078 (Japan)\0", NULL, "Data East Corporation", "Miscellaneous",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_ORIENTATION_VERTICAL, 2, HARDWARE_PREFIX_DATAEAST, GBF_VERSHOOT, 0,
-	NULL, darwinRomInfo, darwinRomName, NULL, NULL, BrkthruInputInfo, DarwinDIPInfo,
+	NULL, darwinRomInfo, darwinRomName, NULL, NULL, NULL, NULL, BrkthruInputInfo, DarwinDIPInfo,
 	darwinInit, DrvExit, DrvFrame, DrvDraw, DrvScan, &DrvRecalc, 0x100,
 	240, 240, 3, 4
 };
